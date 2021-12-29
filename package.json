@@ -2,12 +2,15 @@
     "name": "mharj-mongoose-cache",
     "version": "0.0.1",
     "description": "mongoose model cache",
-    "main": "./dist/index.js",
+    "main": "dist/index.js",
     "scripts": {
         "test": "mocha",
         "build": "tsc",
         "prepublishOnly": "npm t && npm run build"
     },
+    "files": [
+        "dist"
+    ],
     "mocha": {
         "exit": true,
         "extension": [
