@@ -83,8 +83,8 @@ describe('Mongoose cache', () => {
 		expect(CarCache.haveModel(carModel)).to.be.true;
 	});
 	it('should get chunk data', async () => {
-		const {total, haveMore} = CarCache.getChunk(1, 0);
-		expect({total, haveMore}).to.be.eql({total: 2, haveMore: true});
+		const {total, haveMore, index, size} = CarCache.getChunk(1, 0);
+		expect({total, haveMore, index, size}).to.be.eql({total: 2, haveMore: true, index: 0, size: 1});
 	});
 	it('test getting data with binded method', () => {
 		const CarList = CarCache.list;

@@ -8,6 +8,18 @@ interface MessageEvents {
 	updated: () => void;
 }
 
+export interface AnyCacheChunk {
+	chunk: unknown[];
+	total: number;
+	haveMore: boolean;
+	size: number;
+	index: number;
+}
+
+export interface DocumentCacheChunk<T extends Document> extends AnyCacheChunk {
+	chunk: T[];
+}
+
 export class ModelCache<T extends Document> extends (EventEmitter as new () => TypedEmitter<MessageEvents>) {
 	private name: string;
 	private logger: LoggerLike | undefined;
@@ -117,13 +129,15 @@ export class ModelCache<T extends Document> extends (EventEmitter as new () => T
 	 * @param index current index
 	 * @returns chunk data, total amount of cache entries and do we have more data than current chunk
 	 */
-	public getChunk(size: number, index: number): {chunk: T[]; total: number; haveMore: boolean} {
+	public getChunk(size: number, index: number): DocumentCacheChunk<T> {
 		const start = size * index;
 		const end = start + size;
 		return {
 			chunk: this.cache.slice(start, end),
 			total: this.cache.length,
 			haveMore: end < this.cache.length,
+			size,
+			index,
 		};
 	}
 	/**
