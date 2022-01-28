@@ -56,7 +56,7 @@ export class ModelCache<T extends Document> extends (EventEmitter as new () => T
 	/**
 	 * Remove single document from cache
 	 */
-	public delete(doc: ObjectId | Document): boolean {
+	public delete(doc: ObjectId | Document | string): boolean {
 		const id = getObjectId(doc);
 		const idx = this.cache.findIndex((e) => id.equals(e._id));
 		if (idx !== -1) {
@@ -149,9 +149,15 @@ export class ModelCache<T extends Document> extends (EventEmitter as new () => T
 	}
 }
 
-export function getObjectId(data: ObjectId | Document): ObjectId {
+export function getObjectId(data: ObjectId | Document | string): ObjectId {
 	if (data instanceof Document) {
-		return data._id;
+		if (data._id instanceof ObjectId) {
+			return data._id;
+		}
+		return new ObjectId(data._id);
 	}
-	return data;
+	if (data instanceof ObjectId) {
+		return data;
+	}
+	return new ObjectId(data);
 }
