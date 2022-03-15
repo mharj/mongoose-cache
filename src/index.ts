@@ -4,8 +4,11 @@ import TypedEmitter from 'typed-emitter';
 import {ObjectId} from 'mongodb';
 import {LoggerLike} from './loggerLike';
 
-interface MessageEvents {
+interface MessageEvents<T extends Document> {
 	updated: () => void;
+	update: (doc: T) => void;
+	add: (doc: T) => void;
+	delete: (id: ObjectId) => void;
 }
 
 export interface AnyCacheChunk {
@@ -20,7 +23,9 @@ export interface DocumentCacheChunk<T extends Document> extends AnyCacheChunk {
 	chunk: T[];
 }
 
-export class ModelCache<T extends Document> extends (EventEmitter as new () => TypedEmitter<MessageEvents>) {
+export class ModelCache<T extends Document> extends (EventEmitter as {
+	new <T extends Document, E = MessageEvents<T>>(): TypedEmitter<E>;
+})<T> {
 	private name: string;
 	private logger: LoggerLike | undefined;
 
@@ -63,6 +68,7 @@ export class ModelCache<T extends Document> extends (EventEmitter as new () => T
 			this.logger?.debug(`${this.name} cache delete ${id.toHexString()}`);
 			this.cache.splice(idx, 1);
 			this.emit('updated');
+			this.emit('delete', id);
 			return true;
 		}
 		return false;
@@ -76,9 +82,11 @@ export class ModelCache<T extends Document> extends (EventEmitter as new () => T
 		if (idx !== -1) {
 			this.logger?.debug(`${this.name} cache update ${model._id}`);
 			this.cache[idx] = model;
+			this.emit('update', model);
 		} else {
 			this.logger?.debug(`${this.name} cache add ${model._id}`);
 			this.cache.push(model);
+			this.emit('add', model);
 		}
 		if (doEmit) {
 			this.emit('updated');

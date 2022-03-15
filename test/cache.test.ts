@@ -27,9 +27,37 @@ const logger = {
 const HouseCache = new ModelCache<IHouse & mongoose.Document>('House', logger as any);
 const CarCache = new ModelCache<ICar & mongoose.Document>('Car', logger as any);
 
+const onHouseUpdated = sinon.fake();
+const onHouseUpdate = sinon.fake();
+const onHouseAdd = sinon.fake();
+const onHouseDelete = sinon.fake();
+HouseCache.on('updated', onHouseUpdated);
+HouseCache.on('update', onHouseUpdate);
+HouseCache.on('add', onHouseAdd);
+HouseCache.on('delete', onHouseDelete);
+
+const onCarUpdated = sinon.fake();
+const onCarUpdate = sinon.fake();
+const onCarAdd = sinon.fake();
+const onCarDelete = sinon.fake();
+CarCache.on('updated', onCarUpdated);
+CarCache.on('update', onCarUpdate);
+CarCache.on('add', onCarAdd);
+CarCache.on('delete', onCarDelete);
+
 let carModel: (ICar & mongoose.Document) | undefined;
 
 describe('Mongoose cache', () => {
+	beforeEach(() => {
+		onHouseUpdated.resetHistory();
+		onHouseUpdate.resetHistory();
+		onHouseAdd.resetHistory();
+		onHouseDelete.resetHistory();
+		onCarUpdated.resetHistory();
+		onCarUpdate.resetHistory();
+		onCarAdd.resetHistory();
+		onCarDelete.resetHistory();
+	});
 	before(async function () {
 		this.timeout(10000);
 		mongod = await MongoMemoryServer.create();
@@ -45,8 +73,12 @@ describe('Mongoose cache', () => {
 	it('should import caches', async () => {
 		HouseCache.import(await House.find());
 		expect(HouseCache.size()).to.be.eq(1);
+		expect(onHouseUpdated.calledOnce).to.be.true;
+		expect(onHouseAdd.calledOnce).to.be.true;
 		CarCache.import(await Car.find());
 		expect(CarCache.size()).to.be.eq(2);
+		expect(onCarUpdated.calledOnce).to.be.true;
+		expect(onCarAdd.callCount).to.be.eq(2);
 	});
 	it('should test sub document populate', async () => {
 		const houseModel = HouseCache.list()[0];
@@ -59,6 +91,8 @@ describe('Mongoose cache', () => {
 		CarCache.replace(carModel);
 		expect(logger.debug.calledOnce).to.be.true;
 		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache update ${carModel._id}`);
+		expect(onCarUpdated.calledOnce).to.be.true;
+		expect(onCarUpdate.calledOnce).to.be.true;
 	});
 	it('should delete document from cache', async () => {
 		logger.debug.resetHistory();
@@ -66,6 +100,8 @@ describe('Mongoose cache', () => {
 		CarCache.delete(carModel);
 		expect(logger.debug.calledOnce).to.be.true;
 		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache delete ${carModel._id}`);
+		expect(onCarUpdated.calledOnce).to.be.true;
+		expect(onCarDelete.calledOnce).to.be.true;
 	});
 	it('should add document to cache', async () => {
 		if (!carModel) {
