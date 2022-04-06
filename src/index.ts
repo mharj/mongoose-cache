@@ -23,6 +23,11 @@ export interface DocumentCacheChunk<T extends Document> extends AnyCacheChunk {
 	chunk: T[];
 }
 
+interface MangleOptions<T extends Document> {
+	preFilter?: (value: T, index: number, array: T[]) => boolean;
+	sort?: (a: T, b: T) => number;
+}
+
 export class ModelCache<T extends Document> extends (EventEmitter as {
 	new <T extends Document, E = MessageEvents<T>>(): TypedEmitter<E>;
 })<T> {
@@ -121,8 +126,14 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	/**
 	 * List documents
 	 */
-	public list(): T[] {
-		return [...this.cache];
+	public list({preFilter, sort}: MangleOptions<T> = {}): T[] {
+		// pre-filter
+		const filterData = preFilter ? this.cache.filter(preFilter) : [...this.cache];
+		// sort
+		if (sort) {
+			filterData.sort(sort);
+		}
+		return filterData;
 	}
 	/**
 	 * Return size of cached documents
@@ -137,13 +148,15 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	 * @param index current index
 	 * @returns chunk data, total amount of cache entries and do we have more data than current chunk
 	 */
-	public getChunk(size: number, index: number): DocumentCacheChunk<T> {
+	public getChunk(size: number, index: number, mangle: MangleOptions<T> = {}): DocumentCacheChunk<T> {
+		const filterData = this.list(mangle);
+		// chunks
 		const start = size * index;
 		const end = start + size;
 		return {
-			chunk: this.cache.slice(start, end),
-			total: this.cache.length,
-			haveMore: end < this.cache.length,
+			chunk: filterData.slice(start, end),
+			total: filterData.length,
+			haveMore: end < filterData.length,
 			size,
 			index,
 		};

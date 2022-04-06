@@ -126,4 +126,16 @@ describe('Mongoose cache', () => {
 		const CarList = CarCache.list;
 		expect(CarList().length).to.be.eq(2);
 	});
+	it('should mangle filter data', async () => {
+		const carList = CarCache.list({preFilter: (c) => c.name === 'car1'});
+		expect(carList.length).to.be.eq(1);
+	});
+	it('should mangle short data', async () => {
+		let carList = CarCache.list({sort: (a, b) => b.name.localeCompare(a.name)});
+		expect(carList.length).to.be.eq(2);
+		expect(carList[0].name).to.be.eq('car2');
+		carList = CarCache.list({sort: (a, b) => a.name.localeCompare(b.name)});
+		expect(carList.length).to.be.eq(2);
+		expect(carList[0].name).to.be.eq('car1');
+	});
 });
