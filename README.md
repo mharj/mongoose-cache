@@ -6,7 +6,7 @@
 ### Create cache instance
 
 ```typescript
-export const SomeCache = new ModelCache<SomeDocument>('Some', console);
+export const SomeCache = new ModelCache<SomeDocument>('Some', {logger: console});
 ```
 
 ### import data
