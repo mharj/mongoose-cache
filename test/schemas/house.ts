@@ -7,7 +7,7 @@ export interface IHouse {
 
 const houseSchema = new Schema<IHouse>({
 	name: {type: String, required: true},
-	cars: [{type: Schema.Types.ObjectId, index: true}],
+	cars: [{type: Schema.Types.ObjectId, index: true, ref: 'car'}],
 });
 
 export type HouseDocument = Document<IHouse>;

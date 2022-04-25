@@ -27,21 +27,29 @@ interface MangleOptions<T extends Document> {
 	preFilter?: (value: T, index: number, array: T[]) => boolean;
 	sort?: (a: T, b: T) => number;
 }
+type ExternalSortFunc<T> = (data: T[], sortFunc: (a: T, b: T) => number) => void;
+
+interface Options<T> {
+	logger?: LoggerLike;
+	sorter?: ExternalSortFunc<T>;
+}
 
 export class ModelCache<T extends Document> extends (EventEmitter as {
 	new <T extends Document, E = MessageEvents<T>>(): TypedEmitter<E>;
 })<T> {
 	private name: string;
 	private logger: LoggerLike | undefined;
+	private sorter: ExternalSortFunc<T> | undefined;
 
-	protected cache: T[] = [];
+	private cacheRecord: Record<string, T> = {};
 
-	public constructor(name: string, logger?: LoggerLike) {
+	public constructor(name: string, {sorter, logger}: Options<T> = {}) {
 		super();
 		if (!name) {
 			throw new Error('no cache name defined');
 		}
 		this.logger = logger;
+		this.sorter = sorter;
 		this.name = name;
 		this.add = this.add.bind(this);
 		this.replace = this.replace.bind(this);
@@ -53,27 +61,29 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	 * Import documents to cache and emit update when done
 	 */
 	public import(models: T[]): void {
-		models.forEach((model) => this.add(model, false));
+		this.cacheRecord = models.reduce((buildRecord, model) => {
+			buildRecord[getDocIdStr(model)] = model;
+			return buildRecord;
+		}, {});
 		this.emit('updated');
 	}
 
 	/**
 	 * Add single document to cache
 	 */
-	public add(model: T, doEmit = true): void {
-		this.replace(model, doEmit);
+	public add(model: T): void {
+		this.replace(model);
 	}
 	/**
 	 * Remove single document from cache
 	 */
 	public delete(doc: ObjectId | Document | string): boolean {
-		const id = getObjectId(doc);
-		const idx = this.cache.findIndex((e) => id.equals(e._id));
-		if (idx !== -1) {
-			this.logger?.debug(`${this.name} cache delete ${id.toHexString()}`);
-			this.cache.splice(idx, 1);
+		const idString = getDocIdStr(doc);
+		if (idString in this.cacheRecord) {
+			this.logger?.debug(`${this.name} cache delete ${idString}`);
+			delete this.cacheRecord[idString];
 			this.emit('updated');
-			this.emit('delete', id);
+			this.emit('delete', getObjectId(doc));
 			return true;
 		}
 		return false;
@@ -81,34 +91,31 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	/**
 	 * Add or replace document in cache
 	 */
-	public replace(model: T, doEmit = true): void {
-		const id = getObjectId(model);
-		const idx = this.cache.findIndex((e) => id.equals(e._id));
-		if (idx !== -1) {
+	public replace(model: T): void {
+		const idString = getDocIdStr(model);
+		if (this.cacheRecord[idString]) {
 			this.logger?.debug(`${this.name} cache update ${model._id}`);
-			this.cache[idx] = model;
+			this.cacheRecord[idString] = model;
 			this.emit('update', model);
 		} else {
 			this.logger?.debug(`${this.name} cache add ${model._id}`);
-			this.cache.push(model);
+			this.cacheRecord[idString] = model;
 			this.emit('add', model);
 		}
-		if (doEmit) {
-			this.emit('updated');
-		}
+		this.emit('updated');
 	}
 	/**
 	 * Clear cache and emit update
 	 */
 	public reset(): void {
-		this.cache = [];
+		this.cacheRecord = {};
 		this.emit('updated');
 	}
 	/**
 	 * Get single document from cache
 	 */
 	public get(id: ObjectId): T | undefined {
-		return this.cache.find(({_id}) => id.equals(_id));
+		return this.cacheRecord[getDocIdStr(id)];
 	}
 	/**
 	 * Return existing documents from cache
@@ -127,11 +134,16 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	 * List documents
 	 */
 	public list({preFilter, sort}: MangleOptions<T> = {}): T[] {
+		const data = this.asArray();
 		// pre-filter
-		const filterData = preFilter ? this.cache.filter(preFilter) : [...this.cache];
+		const filterData = preFilter ? data.filter(preFilter) : data;
 		// sort
 		if (sort) {
-			filterData.sort(sort);
+			if (this.sorter) {
+				this.sorter(filterData, sort);
+			} else {
+				filterData.sort(sort); // use default sort
+			}
 		}
 		return filterData;
 	}
@@ -139,7 +151,7 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	 * Return size of cached documents
 	 */
 	public size(): number {
-		return this.cache.length;
+		return Object.keys(this.cacheRecord).length;
 	}
 
 	/**
@@ -165,8 +177,11 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	 * is document on cache
 	 */
 	public haveModel(model: T): boolean {
-		const id = getObjectId(model);
-		return this.cache.some((e) => id.equals(e._id));
+		return getDocIdStr(model) in this.cacheRecord;
+	}
+
+	protected asArray(): T[] {
+		return Object.values(this.cacheRecord);
 	}
 }
 
@@ -181,4 +196,20 @@ export function getObjectId(data: ObjectId | Document | string): ObjectId {
 		return data;
 	}
 	return new ObjectId(data);
+}
+
+/**
+ * get string representation of ObjectId
+ */
+export function getDocIdStr(data: string | ObjectId | Document): string {
+	if (typeof data === 'string') {
+		return data;
+	}
+	if (data instanceof ObjectId) {
+		return '' + data;
+	}
+	if (data instanceof Document) {
+		return getDocIdStr(data._id);
+	}
+	throw new Error('unknown Document ID type: ' + typeof data);
 }
