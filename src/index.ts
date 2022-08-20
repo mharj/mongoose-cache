@@ -1,13 +1,13 @@
-import {Document} from 'mongoose';
+import {Document, HydratedDocument} from 'mongoose';
 import * as EventEmitter from 'events';
 import TypedEmitter from 'typed-emitter';
 import {ObjectId} from 'mongodb';
 import {LoggerLike} from './loggerLike';
 
-interface MessageEvents<T extends Document> {
+interface MessageEvents<T, DocType extends HydratedDocument<T>> {
 	updated: () => void;
-	update: (doc: T) => void;
-	add: (doc: T) => void;
+	update: (doc: DocType) => void;
+	add: (doc: DocType) => void;
 	delete: (id: ObjectId) => void;
 }
 
@@ -19,13 +19,13 @@ export interface AnyCacheChunk {
 	index: number;
 }
 
-export interface DocumentCacheChunk<T extends Document> extends AnyCacheChunk {
-	chunk: T[];
+export interface DocumentCacheChunk<T, DocType extends HydratedDocument<T>> extends AnyCacheChunk {
+	chunk: DocType[];
 }
 
-interface MangleOptions<T extends Document> {
-	preFilter?: (value: T, index: number, array: T[]) => boolean;
-	sort?: (a: T, b: T) => number;
+interface MangleOptions<T, DocType extends HydratedDocument<T>> {
+	preFilter?: (value: DocType, index: number, array: DocType[]) => boolean;
+	sort?: (a: DocType, b: DocType) => number;
 }
 type ExternalSortFunc<T> = (data: T[], sortFunc: (a: T, b: T) => number) => void;
 
@@ -34,16 +34,16 @@ interface Options<T> {
 	sorter?: ExternalSortFunc<T>;
 }
 
-export class ModelCache<T extends Document> extends (EventEmitter as {
-	new <T extends Document, E = MessageEvents<T>>(): TypedEmitter<E>;
-})<T> {
+export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> extends (EventEmitter as {
+	new <DocType extends HydratedDocument<any>, E = MessageEvents<any, DocType>>(): TypedEmitter<E>;
+})<DocType> {
 	private name: string;
 	private logger: LoggerLike | undefined;
-	private sorter: ExternalSortFunc<T> | undefined;
+	private sorter: ExternalSortFunc<DocType> | undefined;
 
-	private cacheRecord: Record<string, T> = {};
+	private cacheRecord: Record<string, DocType> = {};
 
-	public constructor(name: string, {sorter, logger}: Options<T> = {}) {
+	public constructor(name: string, {sorter, logger}: Options<DocType> = {}) {
 		super();
 		if (!name) {
 			throw new Error('no cache name defined');
@@ -60,9 +60,9 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	/**
 	 * Import documents to cache and emit update when done
 	 */
-	public import(models: T[]): void {
+	public import(models: DocType[]): void {
 		this.cacheRecord = models.reduce((buildRecord, model) => {
-			buildRecord[getDocIdStr(model)] = model;
+			buildRecord[getDocIdStr<T>(model)] = model;
 			return buildRecord;
 		}, {});
 		this.emit('updated');
@@ -71,19 +71,19 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	/**
 	 * Add single document to cache
 	 */
-	public add(model: T): void {
+	public add(model: DocType): void {
 		this.replace(model);
 	}
 	/**
 	 * Remove single document from cache
 	 */
-	public delete(doc: ObjectId | Document | string): boolean {
-		const idString = getDocIdStr(doc);
+	public delete(doc: ObjectId | DocType | string): boolean {
+		const idString = getDocIdStr<T>(doc);
 		if (idString in this.cacheRecord) {
 			this.logger?.debug(`${this.name} cache delete ${idString}`);
 			delete this.cacheRecord[idString];
 			this.emit('updated');
-			this.emit('delete', getObjectId(doc));
+			this.emit('delete', getObjectId<T>(doc));
 			return true;
 		}
 		return false;
@@ -91,8 +91,8 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	/**
 	 * Add or replace document in cache
 	 */
-	public replace(model: T): void {
-		const idString = getDocIdStr(model);
+	public replace(model: DocType): void {
+		const idString = getDocIdStr<T>(model);
 		if (this.cacheRecord[idString]) {
 			this.logger?.debug(`${this.name} cache update ${model._id}`);
 			this.cacheRecord[idString] = model;
@@ -114,16 +114,16 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	/**
 	 * Get single document from cache
 	 */
-	public get(id: ObjectId): T | undefined {
+	public get(id: ObjectId): DocType | undefined {
 		return this.cacheRecord[getDocIdStr(id)];
 	}
 	/**
 	 * Return existing documents from cache
 	 */
-	public getArray(idList: ObjectId[] | T[]): T[] {
-		const data: T[] = [];
+	public getArray(idList: ObjectId[] | DocType[]): DocType[] {
+		const data: DocType[] = [];
 		for (const id of idList) {
-			const model = this.get(getObjectId(id));
+			const model = this.get(getObjectId<T>(id));
 			if (model) {
 				data.push(model);
 			}
@@ -133,7 +133,7 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	/**
 	 * List documents
 	 */
-	public list({preFilter, sort}: MangleOptions<T> = {}): T[] {
+	public list({preFilter, sort}: MangleOptions<T, DocType> = {}): DocType[] {
 		const data = this.asArray();
 		// pre-filter
 		const filterData = preFilter ? data.filter(preFilter) : data;
@@ -160,7 +160,7 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	 * @param index current index
 	 * @returns chunk data, total amount of cache entries and do we have more data than current chunk
 	 */
-	public getChunk(size: number, index: number, mangle: MangleOptions<T> = {}): DocumentCacheChunk<T> {
+	public getChunk(size: number, index: number, mangle: MangleOptions<T, DocType> = {}): DocumentCacheChunk<T, DocType> {
 		const filterData = this.list(mangle);
 		// chunks
 		const start = size * index;
@@ -176,16 +176,16 @@ export class ModelCache<T extends Document> extends (EventEmitter as {
 	/**
 	 * is document on cache
 	 */
-	public haveModel(model: T): boolean {
-		return getDocIdStr(model) in this.cacheRecord;
+	public haveModel(model: DocType): boolean {
+		return getDocIdStr<T>(model) in this.cacheRecord;
 	}
 
-	protected asArray(): T[] {
+	protected asArray(): DocType[] {
 		return Object.values(this.cacheRecord);
 	}
 }
 
-export function getObjectId(data: ObjectId | Document | string): ObjectId {
+export function getObjectId<T>(data: ObjectId | HydratedDocument<T> | string): ObjectId {
 	if (data instanceof Document) {
 		if (data._id instanceof ObjectId) {
 			return data._id;
@@ -201,7 +201,7 @@ export function getObjectId(data: ObjectId | Document | string): ObjectId {
 /**
  * get string representation of ObjectId
  */
-export function getDocIdStr(data: string | ObjectId | Document): string {
+export function getDocIdStr<T>(data: string | ObjectId | HydratedDocument<T>): string {
 	if (typeof data === 'string') {
 		return data;
 	}

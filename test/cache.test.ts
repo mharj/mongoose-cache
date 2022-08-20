@@ -19,8 +19,8 @@ const logger = {
 	warn: sinon.fake(),
 } as any;
 
-const HouseCache = new ModelCache<IHouse & mongoose.Document>('House', {logger});
-const CarCache = new ModelCache<ICar & mongoose.Document>('Car', {logger, sorter: timSort.sort});
+const HouseCache = new ModelCache<IHouse>('House', {logger});
+const CarCache = new ModelCache<ICar>('Car', {logger, sorter: timSort.sort});
 
 const onHouseUpdated = sinon.fake();
 const onHouseUpdate = sinon.fake();
