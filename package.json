@@ -43,21 +43,28 @@
     },
     "homepage": "https://github.com/mharj/mongoose-cache#readme",
     "devDependencies": {
-        "@types/chai": "^4.3.1",
-        "@types/mocha": "^9.1.1",
-        "@types/node": "^16.11.36",
-        "@types/sinon": "^10.0.11",
+        "@types/chai": "^4.3.4",
+        "@types/mocha": "^10.0.0",
+        "@types/node": "^18.x",
+        "@types/sinon": "^10.0.13",
         "@types/timsort": "^0.3.0",
-        "chai": "^4.3.6",
-        "mocha": "^10.0.0",
-        "mongodb-memory-server": "^8.6.0",
-        "sinon": "^14.0.0",
+        "@typescript-eslint/eslint-plugin": "^5.43.0",
+        "@typescript-eslint/parser": "^5.43.0",
+        "chai": "^4.3.7",
+        "eslint": "^8.27.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-config-standard": "^17.0.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "eslint-plugin-sonarjs": "^0.16.0",
+        "mocha": "^10.1.0",
+        "mongodb-memory-server": "^8.10.0",
+        "sinon": "^14.0.2",
         "timsort": "^0.3.0",
-        "ts-node": "^10.8.0",
+        "ts-node": "^10.9.1",
         "typed-emitter": "^1.4.0",
-        "typescript": "^4.7.2"
+        "typescript": "^4.9.3"
     },
     "dependencies": {
-        "mongoose": "^6.3.4"
+        "mongoose": "^6.x"
     }
 }

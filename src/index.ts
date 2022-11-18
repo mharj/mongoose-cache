@@ -74,6 +74,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	public add(model: DocType): void {
 		this.replace(model);
 	}
+
 	/**
 	 * Remove single document from cache
 	 */
@@ -88,6 +89,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 		}
 		return false;
 	}
+
 	/**
 	 * Add or replace document in cache
 	 */
@@ -104,6 +106,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 		}
 		this.emit('updated');
 	}
+
 	/**
 	 * Clear cache and emit update
 	 */
@@ -111,6 +114,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 		this.cacheRecord = {};
 		this.emit('updated');
 	}
+
 	/**
 	 * Get single document from cache
 	 * @param {} id - id of document to get
@@ -125,6 +129,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 		}
 		return entry;
 	}
+
 	/**
 	 * Return existing documents from cache
 	 */
@@ -138,6 +143,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 		}
 		return data;
 	}
+
 	/**
 	 * List documents
 	 */
@@ -155,6 +161,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 		}
 		return filterData;
 	}
+
 	/**
 	 * Return size of cached documents
 	 */
@@ -181,6 +188,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 			index,
 		};
 	}
+
 	/**
 	 * is document on cache
 	 */
