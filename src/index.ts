@@ -113,9 +113,15 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	}
 	/**
 	 * Get single document from cache
+	 * @param {} id - id of document to get
+	 * @param {} onNotFound - optional error throw callback hook if document is not found
 	 */
-	public get(id: ObjectId): DocType | undefined {
-		return this.cacheRecord[getDocIdStr(id)];
+	public get(id: ObjectId, onNotFound?: (currentId: ObjectId) => Error): DocType | undefined {
+		const entry = this.cacheRecord[getDocIdStr(id)];
+		if (!entry && onNotFound) {
+			throw onNotFound(id);
+		}
+		return entry;
 	}
 	/**
 	 * Return existing documents from cache

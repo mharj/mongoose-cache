@@ -1,6 +1,7 @@
 process.env.NODE_ENV = 'test';
 import {expect} from 'chai';
 import * as timSort from 'timsort';
+import {ObjectId} from 'mongodb';
 import * as mongoose from 'mongoose';
 import {MongoMemoryServer} from 'mongodb-memory-server';
 import 'mocha';
@@ -70,6 +71,13 @@ describe('Mongoose cache', () => {
 		expect(cars.length).to.equal(carCount);
 		oneCar = await new Car(mockCar()).save();
 		await new House({name: 'house1', cars}).save();
+	});
+	it('should not exists', async function () {
+		const rndId = new ObjectId();
+		expect(CarCache.get(rndId)).to.be.undefined;
+		expect(function () {
+			CarCache.get(rndId, () => new Error('test'));
+		}).to.throw(Error, 'test');
 	});
 	it('should import caches', async function () {
 		this.timeout(60000);
