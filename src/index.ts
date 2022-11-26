@@ -34,6 +34,8 @@ interface Options<T> {
 	sorter?: ExternalSortFunc<T>;
 }
 
+export type ErrorCallbackHandler = (currentId: ObjectId) => Error;
+
 export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> extends (EventEmitter as {
 	new <DocType extends HydratedDocument<any>, E = MessageEvents<any, DocType>>(): TypedEmitter<E>;
 })<DocType> {
@@ -120,9 +122,9 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * @param {} id - id of document to get
 	 * @param {} onNotFound - optional error throw callback hook if document is not found
 	 */
-	public get(id: ObjectId, onNotFound: (currentId: ObjectId) => Error): DocType;
-	public get(id: ObjectId, onNotFound?: (currentId: ObjectId) => Error): DocType | undefined;
-	public get(id: ObjectId, onNotFound?: (currentId: ObjectId) => Error): DocType | undefined {
+	public get(id: ObjectId, onNotFound: ErrorCallbackHandler): DocType;
+	public get(id: ObjectId, onNotFound?: ErrorCallbackHandler): DocType | undefined;
+	public get(id: ObjectId, onNotFound?: ErrorCallbackHandler): DocType | undefined {
 		const entry = this.cacheRecord[getDocIdStr(id)];
 		if (!entry && onNotFound) {
 			throw onNotFound(id);

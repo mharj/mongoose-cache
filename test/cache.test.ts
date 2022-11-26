@@ -1,3 +1,5 @@
+/* eslint-disable import/first */
+/* eslint-disable no-unused-expressions */
 process.env.NODE_ENV = 'test';
 import {expect} from 'chai';
 import * as timSort from 'timsort';
