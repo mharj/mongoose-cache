@@ -78,16 +78,17 @@ describe('Mongoose cache', () => {
 		const rndId = new ObjectId();
 		expect(CarCache.get(rndId)).to.be.undefined;
 		expect(function () {
-			CarCache.get(rndId, () => new Error('test'));
+			CarCache.get(rndId, undefined, () => new Error('test'));
 		}).to.throw(Error, 'test');
 	});
+
 	it('should import caches', async function () {
 		this.timeout(60000);
 		HouseCache.import(await House.find());
-		expect(HouseCache.size()).to.be.eq(1);
+		expect(HouseCache.size).to.be.eq(1);
 		expect(onHouseUpdated.calledOnce).to.be.true;
 		CarCache.import(cars);
-		expect(CarCache.size()).to.be.eq(carCount);
+		expect(CarCache.size).to.be.eq(carCount);
 		expect(onCarUpdated.calledOnce).to.be.true;
 	});
 	it('should test sub document populate', async () => {
@@ -101,7 +102,32 @@ describe('Mongoose cache', () => {
 		expect(logger.debug.calledOnce).to.be.true;
 		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache add ${oneCar._id}`);
 		carCount++;
-		expect(CarCache.size()).to.be.eq(carCount);
+		expect(CarCache.size).to.be.eq(carCount);
+	});
+	it('should get document to cache', async () => {
+		const carModel = CarCache.get(oneCar._id, undefined, () => new Error('not found'));
+		expect(carModel).to.be.not.undefined;
+		expect(carModel.name).to.be.eq(oneCar.name);
+	});
+	it('should not get document when validate failed', async function () {
+		const rndId = new ObjectId();
+		expect(CarCache.get(rndId)).to.be.undefined;
+		expect(function () {
+			CarCache.get(
+				oneCar._id,
+				() => new TypeError('not valid'),
+				() => new Error('test'),
+			);
+		}).to.throw(TypeError, 'not valid');
+	});
+	it('should function get document to cache', async () => {
+		const carModel = CarCache.get(
+			oneCar._id,
+			(car) => (car.name === oneCar.name ? true : new Error('not match')),
+			() => new Error('not found'),
+		);
+		expect(carModel).to.be.not.undefined;
+		expect(carModel.name).to.be.eq(oneCar.name);
 	});
 	it('should replace document', async () => {
 		logger.debug.resetHistory();
@@ -110,11 +136,11 @@ describe('Mongoose cache', () => {
 		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache update ${oneCar._id}`);
 		expect(onCarUpdated.calledOnce).to.be.true;
 		expect(onCarUpdate.calledOnce).to.be.true;
-		expect(CarCache.size()).to.be.eq(carCount);
+		expect(CarCache.size).to.be.eq(carCount);
 	});
 	it('should check document is in cache', async function () {
 		this.slow(1);
-		expect(CarCache.haveModel(oneCar)).to.be.true;
+		expect(CarCache.has(oneCar)).to.be.true;
 	});
 	it('should delete document from cache', async () => {
 		logger.debug.resetHistory();
@@ -124,7 +150,7 @@ describe('Mongoose cache', () => {
 		expect(onCarUpdated.calledOnce).to.be.true;
 		expect(onCarDelete.calledOnce).to.be.true;
 		carCount--;
-		expect(CarCache.size()).to.be.eq(carCount);
+		expect(CarCache.size).to.be.eq(carCount);
 	});
 	it('should get chunk data', async () => {
 		const {total, haveMore, index, size} = CarCache.getChunk(1, 0);
