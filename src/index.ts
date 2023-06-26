@@ -1,14 +1,15 @@
-import {Document, HydratedDocument} from 'mongoose';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as EventEmitter from 'events';
+import {Document, HydratedDocument, Types} from 'mongoose';
+import {ChunkSession} from './ChunkSession';
+import {ILoggerLike} from '@avanio/logger-like';
 import TypedEmitter from 'typed-emitter';
-import {ObjectId} from 'mongodb';
-import {LoggerLike} from './loggerLike';
 
 interface MessageEvents<T, DocType extends HydratedDocument<T>> {
 	updated: () => void;
 	update: (doc: DocType) => void;
 	add: (doc: DocType) => void;
-	delete: (id: ObjectId) => void;
+	delete: (id: Types.ObjectId) => void;
 }
 
 export interface AnyCacheChunk {
@@ -32,24 +33,24 @@ interface MangleOptions<T, DocType extends HydratedDocument<T>> {
 type ExternalSortFunc<T> = (data: T[], sortFunc: (a: T, b: T) => number) => void;
 
 interface Options<T> {
-	logger?: LoggerLike;
+	logger?: ILoggerLike;
 	sorter?: ExternalSortFunc<T>;
 }
 
-export type ErrorCallbackHandler = (currentId?: ObjectId) => Error;
+export type ErrorCallbackHandler = (currentId?: Types.ObjectId) => Error;
 
 export type ValidatorHandler<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> = (document: DocType) => boolean | Error;
 
 /**
  * All possible Document ID types we can handle
  */
-type CacheIdType<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> = string | ObjectId | DocType;
+type CacheIdType<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> = string | Types.ObjectId | DocType;
 
 export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> extends (EventEmitter as {
 	new <DocType extends HydratedDocument<any>, E = MessageEvents<any, DocType>>(): TypedEmitter<E>;
 })<DocType> {
 	private name: string;
-	private logger: LoggerLike | undefined;
+	private logger: ILoggerLike | undefined;
 	private sorter: ExternalSortFunc<DocType> | undefined;
 
 	private cacheMap = new Map<string, DocType>();
@@ -201,11 +202,18 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 		const end = start + size;
 		return {
 			chunk: filterData.slice(start, end),
-			total: filterData.length,
 			haveMore: end < filterData.length,
-			size,
 			index,
+			size,
+			total: filterData.length,
 		};
+	}
+
+	/**
+	 * get chunk session which have iterator to get next chunk
+	 */
+	public getChunkSession(size: number, mangle: MangleOptions<T, DocType> = {}) {
+		return new ChunkSession<T, DocType>(this.list(mangle), size);
 	}
 
 	/**
@@ -232,30 +240,30 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	}
 }
 
-export function getObjectId<T>(data: ObjectId | HydratedDocument<T> | string): ObjectId {
-	if (data instanceof Document) {
-		if (data._id instanceof ObjectId) {
-			return data._id;
-		}
-		return new ObjectId(data._id);
+export function getObjectId<T>(data: Types.ObjectId | HydratedDocument<T> | string): Types.ObjectId {
+	if (typeof data === 'string') {
+		return new Types.ObjectId(data);
 	}
-	if (data instanceof ObjectId) {
+	if (data instanceof Types.ObjectId) {
 		return data;
 	}
-	return new ObjectId(data);
+	if (data instanceof Document && data._id instanceof Types.ObjectId) {
+		return data._id;
+	}
+	throw new Error('unknown Document ID type: ' + typeof data);
 }
 
 /**
  * get string representation of ObjectId
  */
-export function getDocIdStr<T>(data: string | ObjectId | HydratedDocument<T>): string {
+export function getDocIdStr<T>(data: string | Types.ObjectId | HydratedDocument<T>): string {
 	if (typeof data === 'string') {
 		return data;
 	}
-	if (data instanceof ObjectId) {
+	if (data instanceof Types.ObjectId) {
 		return data.toString();
 	}
-	if (data instanceof Document) {
+	if (data instanceof Document && data._id instanceof Types.ObjectId) {
 		return getDocIdStr(data._id);
 	}
 	throw new Error('unknown Document ID type: ' + typeof data);

@@ -1,9 +1,11 @@
+/* eslint-disable sort-keys */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable sort-imports */
 /* eslint-disable import/first */
 /* eslint-disable no-unused-expressions */
 process.env.NODE_ENV = 'test';
 import {expect} from 'chai';
 import * as timSort from 'timsort';
-import {ObjectId} from 'mongodb';
 import * as mongoose from 'mongoose';
 import {MongoMemoryServer} from 'mongodb-memory-server';
 import 'mocha';
@@ -12,6 +14,7 @@ import {House, IHouse} from './schemas/house';
 import {Car, CarDocument, ICar} from './schemas/car';
 import * as sinon from 'sinon';
 import {carNames, mockCar} from './mock/car';
+import {ChunkSession} from '../src/ChunkSession';
 
 let mongod: MongoMemoryServer | undefined;
 
@@ -47,6 +50,8 @@ let carCount = 10000;
 let cars: CarDocument[] = [];
 let oneCar: CarDocument;
 
+let carChunkSession: ChunkSession<ICar>;
+
 describe('Mongoose cache', () => {
 	beforeEach(() => {
 		onHouseUpdated.resetHistory();
@@ -75,7 +80,7 @@ describe('Mongoose cache', () => {
 		await new House({name: 'house1', cars}).save();
 	});
 	it('should not exists', async function () {
-		const rndId = new ObjectId();
+		const rndId = new mongoose.Types.ObjectId();
 		expect(CarCache.get(rndId)).to.be.undefined;
 		expect(function () {
 			CarCache.get(rndId, undefined, () => new Error('test'));
@@ -110,7 +115,7 @@ describe('Mongoose cache', () => {
 		expect(carModel.name).to.be.eq(oneCar.name);
 	});
 	it('should not get document when validate failed', async function () {
-		const rndId = new ObjectId();
+		const rndId = new mongoose.Types.ObjectId();
 		expect(CarCache.get(rndId)).to.be.undefined;
 		expect(function () {
 			CarCache.get(
@@ -175,5 +180,21 @@ describe('Mongoose cache', () => {
 		const carList = CarCache.list({sort: (a, b) => a.name.localeCompare(b.name)});
 		expect(carList.length).to.be.eq(carCount);
 		expect(carList[0].name.localeCompare(carNames[carNames.length - 1])).to.be.lessThanOrEqual(0);
+	});
+	describe('ChunkSession', () => {
+		it('should create chunk session', function () {
+			this.timeout(100);
+			carChunkSession = CarCache.getChunkSession(1000, {sort: (a, b) => a.name.localeCompare(b.name)});
+		});
+		it('should test Chunk iterator session', () => {
+			const iter = carChunkSession.getIterator();
+			let current = iter.next();
+			while (!current.done) {
+				expect(current.value.total).to.be.eq(carCount);
+				expect(current.value.chunk.length).to.be.eq(1000);
+				current = iter.next();
+			}
+			expect(current.done).to.be.true;
+		});
 	});
 });
