@@ -2,7 +2,6 @@
 
 ## This needs only minimal interaction with database if can feed cache with change stream or pre/post hooks or on model creation/delete calls. Can be easily hooked up with cache event's to push data to presentation layers.(i.e. websockets, other services)
 
-
 ### Create cache instance
 
 ```typescript
@@ -51,6 +50,22 @@ const subDocuments = SubDocCache.getArray(someModel.subIdList);
 SomeCache.on('updated', () => {
 	// do something
 });
+```
+
+### Iterator to iterate over cache in chunks
+
+```typescript
+const carChunkSession: ChunkSession<ICar> = CarCache.getChunkSession(1000, {sort: (a, b) => a.name.localeCompare(b.name)});
+const iter: IterableIterator<DocumentCacheSessionChunk<ICar>> = carChunkSession.getIterator();
+let current: IteratorResult<DocumentCacheSessionChunk<ICar>> = iter.next();
+while (!current.done) {
+	const value: DocumentCacheSessionChunk<ICar> = current.value;
+	values.total // total number of documents in cache
+	values.current // current number of iterated documents
+	values.chunk // array of 1000 or less documents in this chunk
+}
+// you can check if there is more chunks based on current iterated documents and total documents in cache
+// or wait for next chunk to be .done === true
 ```
 
 ### Example: Hookup with mongoose change stream

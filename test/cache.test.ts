@@ -14,7 +14,7 @@ import {House, IHouse} from './schemas/house';
 import {Car, CarDocument, ICar} from './schemas/car';
 import * as sinon from 'sinon';
 import {carNames, mockCar} from './mock/car';
-import {ChunkSession} from '../src/ChunkSession';
+import {ChunkSession, DocumentCacheSessionChunk} from '../src/ChunkSession';
 
 let mongod: MongoMemoryServer | undefined;
 
@@ -187,11 +187,12 @@ describe('Mongoose cache', () => {
 			carChunkSession = CarCache.getChunkSession(1000, {sort: (a, b) => a.name.localeCompare(b.name)});
 		});
 		it('should test Chunk iterator session', () => {
-			const iter = carChunkSession.getIterator();
-			let current = iter.next();
+			const iter: IterableIterator<DocumentCacheSessionChunk<ICar>> = carChunkSession.getIterator();
+			let current: IteratorResult<DocumentCacheSessionChunk<ICar>> = iter.next();
 			while (!current.done) {
-				expect(current.value.total).to.be.eq(carCount);
-				expect(current.value.chunk.length).to.be.eq(1000);
+				const value: DocumentCacheSessionChunk<ICar> = current.value;
+				expect(value.total).to.be.eq(carCount);
+				expect(value.chunk.length).to.be.eq(1000);
 				current = iter.next();
 			}
 			expect(current.done).to.be.true;

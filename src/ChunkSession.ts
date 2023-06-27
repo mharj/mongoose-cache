@@ -12,14 +12,14 @@ export interface AnyCacheSessionChunk {
 	current: number;
 }
 
-export interface DocumentCacheSessionChunk<T, DocType extends HydratedDocument<T>> extends AnyCacheSessionChunk {
+export interface DocumentCacheSessionChunk<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> extends AnyCacheSessionChunk {
 	chunk: DocType[];
 }
 
 export class ChunkSession<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> {
-	private iteratorData: Set<DocumentCacheSessionChunk<T, DocType>>;
+	private iteratorData: Set<DocumentCacheSessionChunk<T>>;
 	constructor(data: DocType[], size: number) {
-		const chunks: DocumentCacheSessionChunk<T, DocType>[] = [];
+		const chunks: DocumentCacheSessionChunk<T>[] = [];
 		for (let i = 0; i < data.length; i += size) {
 			const chunk = data.slice(i, i + size);
 			chunks.push({
@@ -31,7 +31,7 @@ export class ChunkSession<T, DocType extends HydratedDocument<T> = HydratedDocum
 		this.iteratorData = new Set(chunks);
 	}
 
-	public getIterator(): IterableIterator<DocumentCacheSessionChunk<T, DocType>> {
+	public getIterator(): IterableIterator<DocumentCacheSessionChunk<T>> {
 		return this.iteratorData[Symbol.iterator]();
 	}
 }
