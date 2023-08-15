@@ -73,7 +73,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * Import documents to cache and emit update when done
 	 */
 	public import(models: DocType[]): void {
-		models.forEach((model) => this.cacheMap.set(getDocIdStr<T>(model), model));
+		models.forEach((model) => this.cacheMap.set(getDocIdStr<T>(model, this.logger), model));
 		this.emit('updated');
 	}
 
@@ -88,7 +88,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * Remove single document from cache
 	 */
 	public delete(doc: CacheIdType<T>): boolean {
-		const idString = getDocIdStr<T>(doc);
+		const idString = getDocIdStr<T>(doc, this.logger);
 		if (this.cacheMap.has(idString)) {
 			this.logger?.debug(`${this.name} cache delete ${idString}`);
 			this.cacheMap.delete(idString);
@@ -103,7 +103,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * Add or replace document in cache
 	 */
 	public replace(model: DocType): void {
-		const idString = getDocIdStr<T>(model);
+		const idString = getDocIdStr<T>(model, this.logger);
 		if (this.cacheMap.has(idString)) {
 			this.logger?.debug(`${this.name} cache update ${model._id}`);
 			this.cacheMap.set(idString, model);
@@ -133,7 +133,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	public get(id: CacheIdType<T>, validator: ValidatorHandler<T> | undefined, onNotFound: ErrorCallbackHandler): DocType;
 	public get(id: CacheIdType<T>, validator?: ValidatorHandler<T>, onNotFound?: ErrorCallbackHandler): DocType | undefined;
 	public get(id: CacheIdType<T>, validator?: ValidatorHandler<T>, onNotFound?: ErrorCallbackHandler): DocType | undefined {
-		const idString = getDocIdStr<T>(id);
+		const idString = getDocIdStr<T>(id, this.logger);
 		const entry = this.cacheMap.get(idString);
 		if (entry && validator) {
 			const error = validator(entry);
@@ -221,14 +221,14 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * @deprecated use has() method instead
 	 */
 	public haveModel(id: CacheIdType<T>): boolean {
-		return this.cacheMap.has(getDocIdStr<T>(id));
+		return this.cacheMap.has(getDocIdStr<T>(id, this.logger));
 	}
 
 	/**
 	 * is id or document on cache
 	 */
 	public has(id: CacheIdType<T>): boolean {
-		return this.cacheMap.has(getDocIdStr<T>(id));
+		return this.cacheMap.has(getDocIdStr<T>(id, this.logger));
 	}
 
 	protected asArray(): DocType[] {
@@ -250,13 +250,14 @@ export function getObjectId<T>(data: Types.ObjectId | HydratedDocument<T> | stri
 	if (data instanceof Document && data._id instanceof Types.ObjectId) {
 		return data._id;
 	}
-	throw new Error('unknown Document ID type: ' + typeof data);
+	throw new Error('getObjectId: unknown Document ID type: ' + typeof data);
 }
 
 /**
  * get string representation of ObjectId
  */
-export function getDocIdStr<T>(data: string | Types.ObjectId | HydratedDocument<T>): string {
+let warnOnce = false;
+export function getDocIdStr<T>(data: string | Types.ObjectId | HydratedDocument<T>, logger: ILoggerLike | undefined): string {
 	if (typeof data === 'string') {
 		return data;
 	}
@@ -264,7 +265,24 @@ export function getDocIdStr<T>(data: string | Types.ObjectId | HydratedDocument<
 		return data.toString();
 	}
 	if (data instanceof Document && data._id instanceof Types.ObjectId) {
-		return getDocIdStr(data._id);
+		return getDocIdStr(data._id, logger);
 	}
-	throw new Error('unknown Document ID type: ' + typeof data);
+	// object document and objectid fallback (strange issue with new mongoose version)
+	if (isPlainModel(data) && isPlainObjectId(data._id)) {
+		if (!warnOnce) {
+			const message = 'getDocIdStr: objects are not instance of Document (mongoose bug?), fallback to check constructor names';
+			logger ? logger.warn(message) : console.warn(message);
+			warnOnce = true;
+		}
+		return data._id.toString();
+	}
+	throw new Error('getDocIdStr: unknown Document ID type: ' + typeof data);
+}
+
+function isPlainObjectId(data: unknown): data is Types.ObjectId {
+	return typeof data === 'object' && data !== null && data.constructor.name === 'ObjectId';
+}
+
+function isPlainModel(data: unknown): data is Document {
+	return typeof data === 'object' && data !== null && data.constructor.name === 'model';
 }

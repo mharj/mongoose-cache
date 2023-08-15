@@ -60,6 +60,7 @@
         "eslint-plugin-sonarjs": "^0.19.0",
         "mocha": "^10.2.0",
         "mongodb-memory-server": "^8.13.0",
+        "mongoose": "^7.4.3",
         "prettier": "^2.8.8",
         "sinon": "^15.2.0",
         "timsort": "^0.3.0",
