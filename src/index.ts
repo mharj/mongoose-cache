@@ -1,7 +1,7 @@
-import * as EventEmitter from 'events';
 import {Document, Types} from 'mongoose';
 import type {AnyHydratedDocument} from './types';
 import {ChunkSession} from './ChunkSession';
+import EventEmitter from 'events';
 import {ILoggerLike} from '@avanio/logger-like';
 import TypedEmitter from 'typed-emitter';
 // exports
