@@ -1,17 +1,13 @@
 {
+	"extends": "@tsconfig/node16/tsconfig.json",
 	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es2019",
-		"lib": [
-			"es2020"
-		],
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"moduleResolution": "node",
 		"sourceRoot": "./src",
 		"types": [
 			"node"
 		],
+		"esModuleInterop": false,
 		"declaration": true,
 		"removeComments": false,
 		"inlineSources": true,
@@ -23,6 +19,7 @@
 		"importHelpers": true,
 		"strictNullChecks": true,
 		"noUnusedLocals": true,
+		"noUncheckedIndexedAccess": true
 	},
 	"include": [
 		"src/**/*"

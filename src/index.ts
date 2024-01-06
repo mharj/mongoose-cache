@@ -5,12 +5,12 @@ import {ChunkSession} from './ChunkSession';
 import {ILoggerLike} from '@avanio/logger-like';
 import TypedEmitter from 'typed-emitter';
 
-interface MessageEvents<T, DocType extends HydratedDocument<T>> {
+type MessageEvents<DocType extends HydratedDocument<any>> = {
 	updated: () => void;
 	update: (doc: DocType) => void;
 	add: (doc: DocType) => void;
 	delete: (id: Types.ObjectId) => void;
-}
+};
 
 export interface AnyCacheChunk {
 	chunk: unknown[];
@@ -47,7 +47,7 @@ export type ValidatorHandler<T, DocType extends HydratedDocument<T> = HydratedDo
 type CacheIdType<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> = string | Types.ObjectId | DocType;
 
 export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> extends (EventEmitter as {
-	new <DocType extends HydratedDocument<any>, E = MessageEvents<any, DocType>>(): TypedEmitter<E>;
+	new <DocType extends HydratedDocument<any>, E extends MessageEvents<DocType> = MessageEvents<DocType>>(): TypedEmitter<E>;
 })<DocType> {
 	private name: string;
 	private logger: ILoggerLike | undefined;

@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable sort-keys */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable sort-imports */
@@ -98,6 +99,9 @@ describe('Mongoose cache', () => {
 	});
 	it('should test sub document populate', async () => {
 		const houseModel = HouseCache.list()[0];
+		if (!houseModel) {
+			throw new Error('no house model');
+		}
 		const CarModels = CarCache.getArray(houseModel.cars);
 		expect(CarModels.length).to.be.eq(carCount);
 	});
@@ -166,20 +170,40 @@ describe('Mongoose cache', () => {
 		expect(CarList().length).to.be.eq(carCount);
 	});
 	it('should mangle filter data', async () => {
-		const carList = CarCache.list({preFilter: (c) => c.name === cars[0].name});
+		const firstCar = cars[0];
+		if (!firstCar) {
+			throw new Error('no first car');
+		}
+		const carList = CarCache.list({preFilter: (c) => c.name === firstCar.name});
 		expect(carList.length).to.be.greaterThanOrEqual(1);
 	});
 	it('should mangle short data asc', async function () {
 		this.timeout(10000);
 		const carList = CarCache.list({sort: (a, b) => b.name.localeCompare(a.name)});
 		expect(carList.length).to.be.eq(carCount);
-		expect(carList[0].name.localeCompare(carNames[0])).to.be.greaterThanOrEqual(0);
+		const firstCar = cars[0];
+		if (!firstCar) {
+			throw new Error('no first car');
+		}
+		const firstCarName = carNames[0];
+		if (!firstCarName) {
+			throw new Error('no first car name');
+		}
+		expect(firstCar.name.localeCompare(firstCarName)).to.be.greaterThanOrEqual(0);
 	});
 	it('should mangle short data desc', async function () {
 		this.timeout(10000);
 		const carList = CarCache.list({sort: (a, b) => a.name.localeCompare(b.name)});
 		expect(carList.length).to.be.eq(carCount);
-		expect(carList[0].name.localeCompare(carNames[carNames.length - 1])).to.be.lessThanOrEqual(0);
+		const firstCar = cars[0];
+		if (!firstCar) {
+			throw new Error('no first car');
+		}
+		const lastCarName = carNames[carNames.length - 1];
+		if (!lastCarName) {
+			throw new Error('no last car name');
+		}
+		expect(firstCar.name.localeCompare(lastCarName)).to.be.lessThanOrEqual(0);
 	});
 	describe('ChunkSession', () => {
 		it('should create chunk session', function () {

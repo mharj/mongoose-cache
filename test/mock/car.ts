@@ -115,10 +115,19 @@ export const carNames = [
 	'Zagato',
 	'Zaz',
 	'Zil',
-];
+] as const;
+
+function randomName(): string {
+	const idx = Math.floor(Math.random() * carNames.length);
+	const name = carNames[idx];
+	if (!name) {
+		throw new Error('no name');
+	}
+	return name;
+}
 
 export function mockCar(): ICar {
 	return {
-		name: carNames[Math.floor(Math.random() * carNames.length)],
+		name: randomName(),
 	};
 }
