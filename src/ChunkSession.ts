@@ -1,4 +1,4 @@
-import {HydratedDocument} from 'mongoose';
+import type {AnyHydratedDocument} from './types';
 
 export interface AnyCacheSessionChunk {
 	chunk: unknown[];
@@ -12,14 +12,14 @@ export interface AnyCacheSessionChunk {
 	current: number;
 }
 
-export interface DocumentCacheSessionChunk<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> extends AnyCacheSessionChunk {
+export interface DocumentCacheSessionChunk<DocType extends AnyHydratedDocument = AnyHydratedDocument> extends AnyCacheSessionChunk {
 	chunk: DocType[];
 }
 
-export class ChunkSession<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> {
-	private iteratorData: Set<DocumentCacheSessionChunk<T>>;
+export class ChunkSession<DocType extends AnyHydratedDocument = AnyHydratedDocument> {
+	private iteratorData: Set<DocumentCacheSessionChunk<DocType>>;
 	constructor(data: DocType[], size: number) {
-		const chunks: DocumentCacheSessionChunk<T>[] = [];
+		const chunks: DocumentCacheSessionChunk<DocType>[] = [];
 		for (let i = 0; i < data.length; i += size) {
 			const chunk = data.slice(i, i + size);
 			chunks.push({
@@ -31,7 +31,7 @@ export class ChunkSession<T, DocType extends HydratedDocument<T> = HydratedDocum
 		this.iteratorData = new Set(chunks);
 	}
 
-	public getIterator(): IterableIterator<DocumentCacheSessionChunk<T>> {
+	public getIterator(): IterableIterator<DocumentCacheSessionChunk<DocType>> {
 		return this.iteratorData[Symbol.iterator]();
 	}
 }

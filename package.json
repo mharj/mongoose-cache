@@ -2,10 +2,19 @@
     "name": "mharj-mongoose-cache",
     "version": "0.4.0",
     "description": "mongoose model cache",
-    "main": "dist/index.js",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "require": "./dist/index.js",
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "scripts": {
         "test": "mocha",
-        "build": "tsc",
+        "build": "tsup src/index.ts --format cjs,esm --dts --clean",
         "prepublishOnly": "npm t && npm run build",
         "lint": "eslint src"
     },
@@ -66,6 +75,7 @@
         "sinon": "^17.0.1",
         "timsort": "^0.3.0",
         "ts-node": "^10.9.2",
+        "tsup": "^8.0.1",
         "typescript": "^5.3.3"
     },
     "peerDependencies": {

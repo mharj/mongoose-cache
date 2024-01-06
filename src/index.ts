@@ -1,11 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as EventEmitter from 'events';
-import {Document, HydratedDocument, Types} from 'mongoose';
+import {Document, Types} from 'mongoose';
+import type {AnyHydratedDocument} from './types';
 import {ChunkSession} from './ChunkSession';
 import {ILoggerLike} from '@avanio/logger-like';
 import TypedEmitter from 'typed-emitter';
+// exports
+export * from './ChunkSession';
+export * from './types';
 
-type MessageEvents<DocType extends HydratedDocument<any>> = {
+type MessageEvents<DocType extends AnyHydratedDocument> = {
 	updated: () => void;
 	update: (doc: DocType) => void;
 	add: (doc: DocType) => void;
@@ -20,14 +23,14 @@ export interface AnyCacheChunk {
 	index: number;
 }
 
-export interface DocumentCacheChunk<T, DocType extends HydratedDocument<T>> extends AnyCacheChunk {
+export interface DocumentCacheChunk<DocType extends AnyHydratedDocument> extends AnyCacheChunk {
 	chunk: DocType[];
 }
 
-type CacheFilter<T, DocType extends HydratedDocument<T>> = (value: DocType, index: number, array: DocType[]) => boolean;
+type CacheFilter<DocType extends AnyHydratedDocument> = (value: DocType, index: number, array: DocType[]) => boolean;
 
-interface MangleOptions<T, DocType extends HydratedDocument<T>> {
-	preFilter?: CacheFilter<T, DocType>;
+interface MangleOptions<DocType extends AnyHydratedDocument> {
+	preFilter?: CacheFilter<DocType>;
 	sort?: (a: DocType, b: DocType) => number;
 }
 type ExternalSortFunc<T> = (data: T[], sortFunc: (a: T, b: T) => number) => void;
@@ -39,15 +42,15 @@ interface Options<T> {
 
 export type ErrorCallbackHandler = (currentId?: Types.ObjectId) => Error;
 
-export type ValidatorHandler<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> = (document: DocType) => boolean | Error;
+export type ValidatorHandler<DocType extends AnyHydratedDocument = AnyHydratedDocument> = (document: DocType) => boolean | Error;
 
 /**
  * All possible Document ID types we can handle
  */
-type CacheIdType<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> = string | Types.ObjectId | DocType;
+type CacheIdType<DocType extends AnyHydratedDocument = AnyHydratedDocument> = string | Types.ObjectId | DocType;
 
-export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocument<T>> extends (EventEmitter as {
-	new <DocType extends HydratedDocument<any>, E extends MessageEvents<DocType> = MessageEvents<DocType>>(): TypedEmitter<E>;
+export class ModelCache<DocType extends AnyHydratedDocument = AnyHydratedDocument> extends (EventEmitter as {
+	new <DocType extends AnyHydratedDocument, E extends MessageEvents<DocType> = MessageEvents<DocType>>(): TypedEmitter<E>;
 })<DocType> {
 	private name: string;
 	private logger: ILoggerLike | undefined;
@@ -73,7 +76,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * Import documents to cache and emit update when done
 	 */
 	public import(models: DocType[]): void {
-		models.forEach((model) => this.cacheMap.set(getDocIdStr<T>(model, this.logger), model));
+		models.forEach((model) => this.cacheMap.set(getDocIdStr(model, this.logger), model));
 		this.emit('updated');
 	}
 
@@ -87,13 +90,13 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	/**
 	 * Remove single document from cache
 	 */
-	public delete(doc: CacheIdType<T>): boolean {
-		const idString = getDocIdStr<T>(doc, this.logger);
+	public delete(doc: CacheIdType<DocType>): boolean {
+		const idString = getDocIdStr(doc, this.logger);
 		if (this.cacheMap.has(idString)) {
 			this.logger?.debug(`${this.name} cache delete ${idString}`);
 			this.cacheMap.delete(idString);
 			this.emit('updated');
-			this.emit('delete', getObjectId<T>(doc));
+			this.emit('delete', getObjectId(doc));
 			return true;
 		}
 		return false;
@@ -103,7 +106,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * Add or replace document in cache
 	 */
 	public replace(model: DocType): void {
-		const idString = getDocIdStr<T>(model, this.logger);
+		const idString = getDocIdStr(model, this.logger);
 		if (this.cacheMap.has(idString)) {
 			this.logger?.debug(`${this.name} cache update ${model._id}`);
 			this.cacheMap.set(idString, model);
@@ -130,10 +133,10 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * @param {} validator - optional validator function to check if document is valid
 	 * @param {} onNotFound - optional error throw callback hook if document is not found
 	 */
-	public get(id: CacheIdType<T>, validator: ValidatorHandler<T> | undefined, onNotFound: ErrorCallbackHandler): DocType;
-	public get(id: CacheIdType<T>, validator?: ValidatorHandler<T>, onNotFound?: ErrorCallbackHandler): DocType | undefined;
-	public get(id: CacheIdType<T>, validator?: ValidatorHandler<T>, onNotFound?: ErrorCallbackHandler): DocType | undefined {
-		const idString = getDocIdStr<T>(id, this.logger);
+	public get(id: CacheIdType<DocType>, validator: ValidatorHandler<DocType> | undefined, onNotFound: ErrorCallbackHandler): DocType;
+	public get(id: CacheIdType<DocType>, validator?: ValidatorHandler<DocType>, onNotFound?: ErrorCallbackHandler): DocType | undefined;
+	public get(id: CacheIdType<DocType>, validator?: ValidatorHandler<DocType>, onNotFound?: ErrorCallbackHandler): DocType | undefined {
+		const idString = getDocIdStr(id, this.logger);
 		const entry = this.cacheMap.get(idString);
 		if (entry && validator) {
 			const error = validator(entry);
@@ -154,9 +157,9 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	/**
 	 * Return existing documents from cache
 	 */
-	public getArray(idList: CacheIdType<T>[]): DocType[] {
+	public getArray(idList: CacheIdType<DocType>[]): DocType[] {
 		return idList.reduce<DocType[]>((acc, id) => {
-			const model = this.get(getObjectId<T>(id));
+			const model = this.get(getObjectId(id));
 			if (model) {
 				acc.push(model);
 			}
@@ -167,7 +170,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	/**
 	 * List documents
 	 */
-	public list({preFilter, sort}: MangleOptions<T, DocType> = {}): DocType[] {
+	public list({preFilter, sort}: MangleOptions<DocType> = {}): DocType[] {
 		const data = this.asArray();
 		// pre-filter
 		const filterData = preFilter ? data.filter(preFilter) : data;
@@ -195,7 +198,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	 * @param index current index
 	 * @returns chunk data, total amount of cache entries and do we have more data than current chunk
 	 */
-	public getChunk(size: number, index: number, mangle: MangleOptions<T, DocType> = {}): DocumentCacheChunk<T, DocType> {
+	public getChunk(size: number, index: number, mangle: MangleOptions<DocType> = {}): DocumentCacheChunk<DocType> {
 		const filterData = this.list(mangle);
 		// chunks
 		const start = size * index;
@@ -212,23 +215,23 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	/**
 	 * get chunk session which have iterator to get next chunk
 	 */
-	public getChunkSession(size: number, mangle: MangleOptions<T, DocType> = {}) {
-		return new ChunkSession<T, DocType>(this.list(mangle), size);
+	public getChunkSession(size: number, mangle: MangleOptions<DocType> = {}) {
+		return new ChunkSession<DocType>(this.list(mangle), size);
 	}
 
 	/**
 	 * is id or document on cache
 	 * @deprecated use has() method instead
 	 */
-	public haveModel(id: CacheIdType<T>): boolean {
-		return this.cacheMap.has(getDocIdStr<T>(id, this.logger));
+	public haveModel(id: CacheIdType<DocType>): boolean {
+		return this.cacheMap.has(getDocIdStr(id, this.logger));
 	}
 
 	/**
 	 * is id or document on cache
 	 */
-	public has(id: CacheIdType<T>): boolean {
-		return this.cacheMap.has(getDocIdStr<T>(id, this.logger));
+	public has(id: CacheIdType<DocType>): boolean {
+		return this.cacheMap.has(getDocIdStr(id, this.logger));
 	}
 
 	protected asArray(): DocType[] {
@@ -240,7 +243,7 @@ export class ModelCache<T, DocType extends HydratedDocument<T> = HydratedDocumen
 	}
 }
 
-export function getObjectId<T>(data: Types.ObjectId | HydratedDocument<T> | string): Types.ObjectId {
+export function getObjectId(data: Types.ObjectId | AnyHydratedDocument | string): Types.ObjectId {
 	if (typeof data === 'string') {
 		return new Types.ObjectId(data);
 	}
@@ -257,7 +260,7 @@ export function getObjectId<T>(data: Types.ObjectId | HydratedDocument<T> | stri
  * get string representation of ObjectId
  */
 let warnOnce = false;
-export function getDocIdStr<T>(data: string | Types.ObjectId | HydratedDocument<T>, logger: ILoggerLike | undefined): string {
+export function getDocIdStr(data: string | Types.ObjectId | AnyHydratedDocument, logger: ILoggerLike | undefined): string {
 	if (typeof data === 'string') {
 		return data;
 	}

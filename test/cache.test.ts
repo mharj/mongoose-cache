@@ -11,8 +11,8 @@ import * as mongoose from 'mongoose';
 import {MongoMemoryServer} from 'mongodb-memory-server';
 import 'mocha';
 import {ModelCache} from '../src/index';
-import {House, IHouse} from './schemas/house';
-import {Car, CarDocument, ICar} from './schemas/car';
+import {House, HouseDocument} from './schemas/house';
+import {Car, CarDocument} from './schemas/car';
 import * as sinon from 'sinon';
 import {carNames, mockCar} from './mock/car';
 import {ChunkSession, DocumentCacheSessionChunk} from '../src/ChunkSession';
@@ -26,8 +26,8 @@ const logger = {
 	warn: sinon.fake(),
 } as any;
 
-const HouseCache = new ModelCache<IHouse>('House', {logger});
-const CarCache = new ModelCache<ICar>('Car', {logger, sorter: timSort.sort});
+const HouseCache = new ModelCache<HouseDocument>('House', {logger});
+const CarCache = new ModelCache<CarDocument>('Car', {logger, sorter: timSort.sort});
 
 const onHouseUpdated = sinon.fake();
 const onHouseUpdate = sinon.fake();
@@ -51,7 +51,7 @@ let carCount = 10000;
 let cars: CarDocument[] = [];
 let oneCar: CarDocument;
 
-let carChunkSession: ChunkSession<ICar>;
+let carChunkSession: ChunkSession<CarDocument>;
 
 describe('Mongoose cache', () => {
 	beforeEach(() => {
@@ -211,10 +211,10 @@ describe('Mongoose cache', () => {
 			carChunkSession = CarCache.getChunkSession(1000, {sort: (a, b) => a.name.localeCompare(b.name)});
 		});
 		it('should test Chunk iterator session', () => {
-			const iter: IterableIterator<DocumentCacheSessionChunk<ICar>> = carChunkSession.getIterator();
-			let current: IteratorResult<DocumentCacheSessionChunk<ICar>> = iter.next();
+			const iter: IterableIterator<DocumentCacheSessionChunk<CarDocument>> = carChunkSession.getIterator();
+			let current: IteratorResult<DocumentCacheSessionChunk<CarDocument>> = iter.next();
 			while (!current.done) {
-				const value: DocumentCacheSessionChunk<ICar> = current.value;
+				const value: DocumentCacheSessionChunk<CarDocument> = current.value;
 				expect(value.total).to.be.eq(carCount);
 				expect(value.chunk.length).to.be.eq(1000);
 				current = iter.next();
