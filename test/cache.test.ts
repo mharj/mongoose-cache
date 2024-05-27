@@ -1,39 +1,37 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sort-keys */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable sort-imports */
 /* eslint-disable import/first */
 /* eslint-disable no-unused-expressions */
 process.env.NODE_ENV = 'test';
-import {expect} from 'chai';
-import * as timSort from 'timsort';
-import * as mongoose from 'mongoose';
-import {MongoMemoryServer} from 'mongodb-memory-server';
 import 'mocha';
-import {ModelCache} from '../src/index';
-import {House, HouseDocument} from './schemas/house';
-import {Car, CarDocument} from './schemas/car';
+import * as mongoose from 'mongoose';
 import * as sinon from 'sinon';
+import {Car, type CarDocument} from './schemas/car';
 import {carNames, mockCar} from './mock/car';
-import {ChunkSession, DocumentCacheSessionChunk} from '../src/ChunkSession';
+import {type ChunkSession, type DocumentCacheSessionChunk} from '../src/ChunkSession';
+import {House, type HouseDocument} from './schemas/house';
+import {expect} from 'chai';
+import {type ILoggerLike} from '@avanio/logger-like';
+import {ModelCache} from '../src/';
+import {MongoMemoryServer} from 'mongodb-memory-server';
 
 let mongod: MongoMemoryServer | undefined;
 
 const logger = {
 	debug: sinon.fake(),
+	error: sinon.fake(),
 	info: sinon.fake(),
 	trace: sinon.fake(),
 	warn: sinon.fake(),
-} as any;
+} satisfies ILoggerLike;
 
 const HouseCache = new ModelCache<HouseDocument>('House', {logger});
-const CarCache = new ModelCache<CarDocument>('Car', {logger, sorter: timSort.sort});
+const CarCache = new ModelCache<CarDocument>('Car', {logger});
 
 const onHouseUpdated = sinon.fake();
 const onHouseUpdate = sinon.fake();
 const onHouseAdd = sinon.fake();
 const onHouseDelete = sinon.fake();
-HouseCache.on('updated', onHouseUpdated);
+HouseCache.on('change', onHouseUpdated);
 HouseCache.on('update', onHouseUpdate);
 HouseCache.on('add', onHouseAdd);
 HouseCache.on('delete', onHouseDelete);
@@ -42,7 +40,7 @@ const onCarUpdated = sinon.fake();
 const onCarUpdate = sinon.fake();
 const onCarAdd = sinon.fake();
 const onCarDelete = sinon.fake();
-CarCache.on('updated', onCarUpdated);
+CarCache.on('change', onCarUpdated);
 CarCache.on('update', onCarUpdate);
 CarCache.on('add', onCarAdd);
 CarCache.on('delete', onCarDelete);
@@ -80,7 +78,7 @@ describe('Mongoose cache', () => {
 		oneCar = await new Car(mockCar()).save();
 		await new House({name: 'house1', cars}).save();
 	});
-	it('should not exists', async function () {
+	it('should not exists', function () {
 		const rndId = new mongoose.Types.ObjectId();
 		expect(CarCache.get(rndId)).to.be.undefined;
 		expect(function () {
@@ -97,7 +95,7 @@ describe('Mongoose cache', () => {
 		expect(CarCache.size).to.be.eq(carCount);
 		expect(onCarUpdated.calledOnce).to.be.true;
 	});
-	it('should test sub document populate', async () => {
+	it('should test sub document populate', function () {
 		const houseModel = HouseCache.list()[0];
 		if (!houseModel) {
 			throw new Error('no house model');
@@ -105,20 +103,20 @@ describe('Mongoose cache', () => {
 		const CarModels = CarCache.getArray(houseModel.cars);
 		expect(CarModels.length).to.be.eq(carCount);
 	});
-	it('should add document to cache', async () => {
+	it('should add document to cache', function () {
 		logger.debug.resetHistory();
 		CarCache.add(oneCar);
 		expect(logger.debug.calledOnce).to.be.true;
-		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache add ${oneCar._id}`);
+		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache add ${oneCar._id.toString()}`);
 		carCount++;
 		expect(CarCache.size).to.be.eq(carCount);
 	});
-	it('should get document to cache', async () => {
+	it('should get document to cache', function () {
 		const carModel = CarCache.get(oneCar._id, undefined, () => new Error('not found'));
 		expect(carModel).to.be.not.undefined;
 		expect(carModel.name).to.be.eq(oneCar.name);
 	});
-	it('should not get document when validate failed', async function () {
+	it('should not get document when validate failed', function () {
 		const rndId = new mongoose.Types.ObjectId();
 		expect(CarCache.get(rndId)).to.be.undefined;
 		expect(function () {
@@ -129,7 +127,7 @@ describe('Mongoose cache', () => {
 			);
 		}).to.throw(TypeError, 'not valid');
 	});
-	it('should function get document to cache', async () => {
+	it('should function get document to cache', function () {
 		const carModel = CarCache.get(
 			oneCar._id,
 			(car) => (car.name === oneCar.name ? true : new Error('not match')),
@@ -138,38 +136,39 @@ describe('Mongoose cache', () => {
 		expect(carModel).to.be.not.undefined;
 		expect(carModel.name).to.be.eq(oneCar.name);
 	});
-	it('should replace document', async () => {
+	it('should replace document', function () {
 		logger.debug.resetHistory();
 		CarCache.replace(oneCar);
 		expect(logger.debug.calledOnce).to.be.true;
-		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache update ${oneCar._id}`);
+		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache update ${oneCar._id.toString()}`);
 		expect(onCarUpdated.calledOnce).to.be.true;
 		expect(onCarUpdate.calledOnce).to.be.true;
 		expect(CarCache.size).to.be.eq(carCount);
 	});
-	it('should check document is in cache', async function () {
+	it('should check document is in cache', function () {
 		this.slow(1);
 		expect(CarCache.has(oneCar)).to.be.true;
 	});
-	it('should delete document from cache', async () => {
+	it('should delete document from cache', function () {
 		logger.debug.resetHistory();
 		CarCache.delete(oneCar);
 		expect(logger.debug.calledOnce).to.be.true;
-		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache delete ${oneCar._id}`);
+		expect(logger.debug.firstCall.firstArg).to.be.eq(`Car cache delete ${oneCar._id.toString()}`);
 		expect(onCarUpdated.calledOnce).to.be.true;
 		expect(onCarDelete.calledOnce).to.be.true;
 		carCount--;
 		expect(CarCache.size).to.be.eq(carCount);
 	});
-	it('should get chunk data', async () => {
+	it('should get chunk data', function () {
 		const {total, haveMore, index, size} = CarCache.getChunk(1, 0);
-		expect({total, haveMore, index, size}).to.be.eql({total: carCount, haveMore: true, index: 0, size: 1});
+		expect({haveMore, index, size, total}).to.be.eql({haveMore: true, index: 0, size: 1, total: carCount});
 	});
-	it('test getting data with binded method', () => {
+	it('test getting data with bind method', () => {
+		// eslint-disable-next-line @typescript-eslint/unbound-method
 		const CarList = CarCache.list;
 		expect(CarList().length).to.be.eq(carCount);
 	});
-	it('should mangle filter data', async () => {
+	it('should mangle filter data', function () {
 		const firstCar = cars[0];
 		if (!firstCar) {
 			throw new Error('no first car');
@@ -177,7 +176,7 @@ describe('Mongoose cache', () => {
 		const carList = CarCache.list({preFilter: (c) => c.name === firstCar.name});
 		expect(carList.length).to.be.greaterThanOrEqual(1);
 	});
-	it('should mangle short data asc', async function () {
+	it('should mangle short data asc', function () {
 		this.timeout(10000);
 		const carList = CarCache.list({sort: (a, b) => b.name.localeCompare(a.name)});
 		expect(carList.length).to.be.eq(carCount);
@@ -185,13 +184,9 @@ describe('Mongoose cache', () => {
 		if (!firstCar) {
 			throw new Error('no first car');
 		}
-		const firstCarName = carNames[0];
-		if (!firstCarName) {
-			throw new Error('no first car name');
-		}
-		expect(firstCar.name.localeCompare(firstCarName)).to.be.greaterThanOrEqual(0);
+		expect(firstCar.name.localeCompare(carNames[0])).to.be.greaterThanOrEqual(0);
 	});
-	it('should mangle short data desc', async function () {
+	it('should mangle short data desc', function () {
 		this.timeout(10000);
 		const carList = CarCache.list({sort: (a, b) => a.name.localeCompare(b.name)});
 		expect(carList.length).to.be.eq(carCount);

@@ -18,14 +18,14 @@
 		"importHelpers": true,
 		"strictNullChecks": true,
 		"noUnusedLocals": true,
-		"noUncheckedIndexedAccess": true
+		"noUncheckedIndexedAccess": true,
 	},
 	"include": [
-		"src/**/*"
+		"src/"
 	],
 	"exclude": [
-		"test/*",
-		"dist/*",
-		"node_modules/*"
+		"test/",
+		"dist/",
+		"node_modules/"
 	]
 }

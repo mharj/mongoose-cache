@@ -1,4 +1,4 @@
-import {Schema, model, HydratedDocument} from 'mongoose';
+import {type HydratedDocument, model, Schema} from 'mongoose';
 
 export interface ICar {
 	name: string;

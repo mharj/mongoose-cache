@@ -1,7 +1,7 @@
-import type {AnyHydratedDocument} from './types';
+import type {AnyHydratedDocument} from './';
 
-export interface AnyCacheSessionChunk {
-	chunk: unknown[];
+export interface DocumentCacheSessionChunk<DocType extends AnyHydratedDocument = AnyHydratedDocument> {
+	chunk: DocType[];
 	/**
 	 * total amount of data
 	 */
@@ -12,12 +12,8 @@ export interface AnyCacheSessionChunk {
 	current: number;
 }
 
-export interface DocumentCacheSessionChunk<DocType extends AnyHydratedDocument = AnyHydratedDocument> extends AnyCacheSessionChunk {
-	chunk: DocType[];
-}
-
 export class ChunkSession<DocType extends AnyHydratedDocument = AnyHydratedDocument> {
-	private iteratorData: Set<DocumentCacheSessionChunk<DocType>>;
+	private readonly iteratorData: Set<DocumentCacheSessionChunk<DocType>>;
 	constructor(data: DocType[], size: number) {
 		const chunks: DocumentCacheSessionChunk<DocType>[] = [];
 		for (let i = 0; i < data.length; i += size) {

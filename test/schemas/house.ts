@@ -1,4 +1,4 @@
-import {Schema, model, Types, HydratedDocument} from 'mongoose';
+import {type HydratedDocument, model, Schema, type Types} from 'mongoose';
 
 export interface IHouse {
 	name: string;
