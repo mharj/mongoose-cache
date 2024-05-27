@@ -77,7 +77,7 @@ export class ModelCache<DocType extends AnyHydratedDocument = AnyHydratedDocumen
 	 * Add single document to cache
 	 */
 	public add(model: DocType, notify = true): void {
-		this.replace(model);
+		this.replace(model, notify);
 	}
 
 	/**
@@ -128,7 +128,7 @@ export class ModelCache<DocType extends AnyHydratedDocument = AnyHydratedDocumen
 		this.notify();
 	}
 
-	public notify() {
+	public notify(): void {
 		this.emit(
 			'init',
 			this.asArray().map((model) => [model._id, model]),
