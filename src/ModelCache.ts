@@ -132,7 +132,6 @@ export class ModelCache<DocType extends AnyHydratedDocument = AnyHydratedDocumen
 	/**
 	 * Clear cache and emit update
 	 */
-
 	public clear(): void {
 		this.cacheMap.clear();
 		this.notify();
