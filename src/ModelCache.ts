@@ -200,8 +200,8 @@ export class ModelCache<DocType extends AnyHydratedDocument = AnyHydratedDocumen
 	 * const sortByModify: CacheSort<ModelType> = (a, b) => a.modified - b.modified;
 	 * const list = cache.list({preFilter: filterActive, sort: sortByModify});
 	 */
-	public list({preFilter, sort}: MangleOptions<DocType> = {}): DocType[] {
-		const data = this.asArray();
+	public list<Out extends DocType>({preFilter, sort}: MangleOptions<Out> = {}): Out[] {
+		const data = this.asArray() as Out[];
 		// pre-filter
 		const filterData = preFilter ? data.filter(preFilter) : data;
 		// sort
