@@ -19,7 +19,7 @@ type MessageEvents<DocType extends AnyHydratedDocument> = {
 	change: () => void;
 	update: (doc: DocType) => void;
 	add: (doc: DocType) => void;
-	delete: (id: Types.ObjectId) => void;
+	delete: (doc: DocType) => void;
 	init: (entries: [Types.ObjectId, DocType][]) => void;
 };
 
@@ -85,12 +85,13 @@ export class ModelCache<DocType extends AnyHydratedDocument = AnyHydratedDocumen
 	 */
 	public delete(doc: ObjectIdTypes<DocType>, notify = true): boolean {
 		const idString = getDocIdStr(doc, this.logger);
-		if (this.cacheMap.has(idString)) {
+		const entry = this.cacheMap.get(idString);
+		if (entry) {
 			this.logger?.debug(`${this.name} cache delete ${idString}`);
 			this.cacheMap.delete(idString);
 			if (notify) {
 				this.emit('change');
-				this.emit('delete', getObjectId(doc));
+				this.emit('delete', entry);
 			}
 			return true;
 		}
