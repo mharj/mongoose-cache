@@ -12,4 +12,4 @@ const houseSchema = new Schema<IHouse>({
 	cars: [{type: Schema.Types.ObjectId, index: true, ref: 'car'}],
 });
 
-export const House = model<IHouse>('house', houseSchema);
+export const HouseModel = model('house', houseSchema);

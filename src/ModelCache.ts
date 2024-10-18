@@ -1,5 +1,4 @@
 import {
-	type AnyHydratedDocument,
 	type CacheFilter,
 	type CacheSort,
 	ChunkSession,
@@ -10,20 +9,19 @@ import {
 	type ObjectIdTypes,
 	type ValidatorHandler,
 } from './';
-import EventEmitter from 'events';
+import type {HydratedDocument, Types} from 'mongoose';
+import {EventEmitter} from 'events';
 import type {ILoggerLike} from '@avanio/logger-like';
-import type TypedEmitter from 'typed-emitter';
-import type {Types} from 'mongoose';
 
-type MessageEvents<DocType extends AnyHydratedDocument> = {
-	change: () => void;
-	update: (doc: DocType) => void;
-	add: (doc: DocType) => void;
-	delete: (doc: DocType) => void;
-	init: (entries: [Types.ObjectId, DocType][]) => void;
+export type ModelCacheEventsMap<DocType extends HydratedDocument<unknown>> = {
+	change: [];
+	update: [doc: DocType];
+	add: [doc: DocType];
+	delete: [doc: DocType];
+	init: [entries: [Types.ObjectId, DocType][]];
 };
 
-interface MangleOptions<DocType extends AnyHydratedDocument> {
+interface MangleOptions<DocType extends HydratedDocument<unknown>> {
 	preFilter?: CacheFilter<DocType>;
 	sort?: CacheSort<DocType>;
 }
@@ -32,9 +30,7 @@ export interface ModelCacheOptions {
 	logger?: ILoggerLike;
 }
 
-type ModelCacheEventEmitter = {new <DocType extends AnyHydratedDocument, E extends MessageEvents<DocType> = MessageEvents<DocType>>(): TypedEmitter<E>};
-
-export class ModelCache<DocType extends AnyHydratedDocument = AnyHydratedDocument> extends (EventEmitter as ModelCacheEventEmitter)<DocType> {
+export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> extends EventEmitter<ModelCacheEventsMap<DocType>> {
 	private readonly name: string;
 	private logger: ILoggerLike | undefined;
 

@@ -56,6 +56,5 @@
         "@typescript-eslint/prefer-nullish-coalescing": "warn",
         "require-await": "off",
         "@typescript-eslint/require-await": "error"
-        
 	}
 }

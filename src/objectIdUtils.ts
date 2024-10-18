@@ -1,11 +1,10 @@
-import {Document, Types} from 'mongoose';
-import type {AnyHydratedDocument} from './';
+import {Document, type HydratedDocument, Types} from 'mongoose';
 import type {ILoggerLike} from '@avanio/logger-like';
 
 /**
  * All possible Document ID types we can handle
  */
-export type ObjectIdTypes<DocType extends AnyHydratedDocument = AnyHydratedDocument> = Types.ObjectId | DocType | string;
+export type ObjectIdTypes<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> = Types.ObjectId | DocType | string;
 
 export function getObjectId(data: ObjectIdTypes): Types.ObjectId;
 export function getObjectId(data: ObjectIdTypes | undefined): Types.ObjectId | undefined;
@@ -48,7 +47,11 @@ export function getDocIdStr(data: ObjectIdTypes | undefined, logger: ILoggerLike
 	if (isPlainModel(data) && isPlainObjectId(data._id)) {
 		if (!warnOnce) {
 			const message = 'getDocIdStr: objects are not instance of Document (mongoose bug?), fallback to check constructor names';
-			logger ? logger.warn(message) : console.warn(message);
+			if (logger) {
+				logger.warn(message);
+			} else {
+				console.warn(message);
+			}
 			warnOnce = true;
 		}
 		return data._id.toString();

@@ -10,4 +10,4 @@ const carSchema = new Schema<ICar>({
 
 export type CarDocument = HydratedDocument<ICar>;
 
-export const Car = model<ICar>('car', carSchema);
+export const CarModel = model('car', carSchema);
