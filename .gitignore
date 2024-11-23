@@ -62,3 +62,6 @@ typings/
 
 # TS build
 dist
+
+# unit test
+test-results.xml

@@ -6,14 +6,15 @@ import {
 	type ErrorCallbackHandler,
 	getDocIdStr,
 	getObjectId,
+	type HydratedDocumentLike,
 	type ObjectIdTypes,
 	type ValidatorHandler,
 } from './';
-import type {HydratedDocument, Types} from 'mongoose';
 import {EventEmitter} from 'events';
 import type {ILoggerLike} from '@avanio/logger-like';
+import type {Types} from 'mongoose';
 
-export type ModelCacheEventsMap<DocType extends HydratedDocument<unknown>> = {
+export type ModelCacheEventsMap<DocType extends HydratedDocumentLike> = {
 	change: [];
 	update: [doc: DocType];
 	add: [doc: DocType];
@@ -21,7 +22,7 @@ export type ModelCacheEventsMap<DocType extends HydratedDocument<unknown>> = {
 	init: [entries: [Types.ObjectId, DocType][]];
 };
 
-interface MangleOptions<DocType extends HydratedDocument<unknown>> {
+interface MangleOptions<DocType extends HydratedDocumentLike> {
 	preFilter?: CacheFilter<DocType>;
 	sort?: CacheSort<DocType>;
 }
@@ -30,7 +31,7 @@ export interface ModelCacheOptions {
 	logger?: ILoggerLike;
 }
 
-export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> extends EventEmitter<ModelCacheEventsMap<DocType>> {
+export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentLike> extends EventEmitter<ModelCacheEventsMap<DocType>> {
 	private readonly name: string;
 	private logger: ILoggerLike | undefined;
 
