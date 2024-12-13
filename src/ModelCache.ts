@@ -8,11 +8,20 @@ import {
 	getObjectId,
 	type HydratedDocumentLike,
 	type ObjectIdTypes,
-	type ValidatorHandler,
 } from './';
+import {type ILoggerLike, LogLevel, type LogMapping, MapLogger} from '@avanio/logger-like';
 import {EventEmitter} from 'events';
-import type {ILoggerLike} from '@avanio/logger-like';
 import type {Types} from 'mongoose';
+
+const defaultLogMap = {
+	add: LogLevel.None,
+	clear: LogLevel.None,
+	delete: LogLevel.None,
+	import: LogLevel.None,
+	update: LogLevel.None,
+};
+
+export type ModelCacheLogMap = LogMapping<keyof typeof defaultLogMap>;
 
 export type ModelCacheEventsMap<DocType extends HydratedDocumentLike> = {
 	change: [];
@@ -29,20 +38,24 @@ interface MangleOptions<DocType extends HydratedDocumentLike> {
 
 export interface ModelCacheOptions {
 	logger?: ILoggerLike;
+	logMapping?: Partial<ModelCacheLogMap>;
 }
 
 export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentLike> extends EventEmitter<ModelCacheEventsMap<DocType>> {
 	private readonly name: string;
-	private logger: ILoggerLike | undefined;
+	private readonly logger: MapLogger<ModelCacheLogMap>;
 
 	private readonly cacheMap = new Map<string, DocType>();
 
-	public constructor(name: string, {logger}: ModelCacheOptions = {}) {
+	public constructor(name: string, {logger, logMapping}: ModelCacheOptions = {}) {
 		super();
 		if (!name) {
 			throw new Error('no cache name defined');
 		}
-		this.logger = logger;
+		this.logger = new MapLogger(logger, defaultLogMap);
+		if (logMapping) {
+			this.setLogMapping(logMapping);
+		}
 		this.name = name;
 		this.add = this.add.bind(this);
 		this.replace = this.replace.bind(this);
@@ -55,19 +68,25 @@ export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentL
 	 * @param logger - logger instance
 	 */
 	public setLogger(logger: ILoggerLike | undefined): void {
-		this.logger = logger;
+		this.logger.setLogger(logger);
+	}
+
+	public setLogMapping(logMap: Partial<ModelCacheLogMap>): void {
+		this.logger.setLogMapping(logMap);
 	}
 
 	/**
 	 * Import documents to cache and emit update when done
 	 */
-	public import(models: DocType[]): void {
-		models.forEach((model) => this.cacheMap.set(getDocIdStr(model, this.logger), model));
+	public import(models: Iterable<DocType>): void {
+		const modelArray = Array.from(models);
+		modelArray.forEach((model) => this.cacheMap.set(getDocIdStr(model, this.logger), model));
 		this.emit(
 			'init',
-			models.map((model) => [model._id, model]),
+			modelArray.map((model) => [model._id, model]),
 		);
 		this.emit('change');
+		this.logger.logKey('import', `${this.name} cache import ${modelArray.length.toString()} documents`);
 	}
 
 	/**
@@ -84,12 +103,12 @@ export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentL
 		const idString = getDocIdStr(doc, this.logger);
 		const entry = this.cacheMap.get(idString);
 		if (entry) {
-			this.logger?.debug(`${this.name} cache delete ${idString}`);
 			this.cacheMap.delete(idString);
 			if (notify) {
 				this.emit('change');
 				this.emit('delete', entry);
 			}
+			this.logger.logKey('delete', `${this.name} cache delete ${idString}`);
 			return true;
 		}
 		return false;
@@ -100,22 +119,13 @@ export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentL
 	 */
 	public replace(model: DocType, notify = true): void {
 		const idString = getDocIdStr(model, this.logger);
-		if (this.cacheMap.has(idString)) {
-			this.logger?.debug(`${this.name} cache update ${model._id.toString()}`);
-			this.cacheMap.set(idString, model);
-			if (notify) {
-				this.emit('update', model);
-			}
-		} else {
-			this.logger?.debug(`${this.name} cache add ${model._id.toString()}`);
-			this.cacheMap.set(idString, model);
-			if (notify) {
-				this.emit('add', model);
-			}
-		}
+		const isUpdate = this.cacheMap.has(idString);
+		this.cacheMap.set(idString, model);
 		if (notify) {
+			this.emit(isUpdate ? 'update' : 'add', model);
 			this.emit('change');
 		}
+		this.logger.logKey(isUpdate ? 'update' : 'add', `${this.name} cache ${isUpdate ? 'update' : 'add'} ${idString}`);
 	}
 
 	/**
@@ -123,8 +133,7 @@ export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentL
 	 * @deprecated use clear() method instead
 	 */
 	public reset(): void {
-		this.cacheMap.clear();
-		this.notify();
+		this.clear();
 	}
 
 	/**
@@ -133,6 +142,7 @@ export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentL
 	public clear(): void {
 		this.cacheMap.clear();
 		this.notify();
+		this.logger.logKey('clear', `${this.name} cache clear`);
 	}
 
 	public notify(): void {
@@ -146,39 +156,28 @@ export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentL
 	/**
 	 * Get single document from cache
 	 * @param {ObjectIdTypes<DocType>} id - id of document to get
-	 * @param {ValidatorHandler<DocType>} validator - optional validator function to check if document is valid
-	 * @param {ErrorCallbackHandler} onNotFound - optional error throw callback hook if document is not found
+	 * @param {ErrorCallbackHandler} buildErrorCallback - optional error throw callback hook if document is not found
 	 */
-	public get(id: ObjectIdTypes<DocType>, validator: ValidatorHandler<DocType> | undefined, onNotFound: ErrorCallbackHandler): DocType;
-	public get(id: ObjectIdTypes<DocType>, validator?: ValidatorHandler<DocType>, onNotFound?: ErrorCallbackHandler): DocType | undefined;
-	public get(id: ObjectIdTypes<DocType>, validator?: ValidatorHandler<DocType>, onNotFound?: ErrorCallbackHandler): DocType | undefined {
+	public get(id: ObjectIdTypes<DocType>, buildErrorCallback: ErrorCallbackHandler): DocType;
+	public get(id: ObjectIdTypes<DocType>, buildErrorCallback?: ErrorCallbackHandler): DocType | undefined;
+	public get(id: ObjectIdTypes<DocType>, buildErrorCallback?: ErrorCallbackHandler): DocType | undefined {
 		const idString = getDocIdStr(id, this.logger);
 		const entry = this.cacheMap.get(idString);
-		if (entry && validator) {
-			const error = validator(entry);
-			if (error === false || error instanceof Error) {
-				if (onNotFound) {
-					throw error || new Error('Document not found');
-				}
-				this.logger?.error(error);
-				return undefined;
-			}
-		}
-		if (!entry && onNotFound) {
-			throw onNotFound(getObjectId(idString));
+		if (!entry && buildErrorCallback) {
+			throw buildErrorCallback(getObjectId(idString));
 		}
 		return entry;
 	}
 
 	/**
 	 * Return existing documents from cache
-	 * @param {ObjectIdTypes<DocType>[]} idList - list of document ids to get
+	 * @param {Iterable<ObjectIdTypes<DocType>>} idList - list of document ids to get
 	 * @returns {DocType[]} list of cached documents
 	 * @example
 	 * const subDocs = subDocCache.getArray(mainModel.subDocIds);
 	 */
-	public getArray(idList: ObjectIdTypes<DocType>[]): DocType[] {
-		return idList.reduce<DocType[]>((acc, id) => {
+	public getArray(idList: Iterable<ObjectIdTypes<DocType>>): DocType[] {
+		return Array.from(idList).reduce<DocType[]>((acc, id) => {
 			const model = this.get(getObjectId(id));
 			if (model) {
 				acc.push(model);
@@ -198,8 +197,8 @@ export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentL
 	 * const sortByModify: CacheSort<ModelType> = (a, b) => a.modified - b.modified;
 	 * const list = cache.list({preFilter: filterActive, sort: sortByModify});
 	 */
-	public list<Out extends DocType>({preFilter, sort}: MangleOptions<Out> = {}): Out[] {
-		const data = this.asArray() as Out[];
+	public list({preFilter, sort}: MangleOptions<DocType> = {}): DocType[] {
+		const data = this.asArray();
 		// pre-filter
 		const filterData = preFilter ? data.filter(preFilter) : data;
 		// sort
