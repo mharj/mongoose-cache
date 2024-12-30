@@ -1,8 +1,6 @@
-import type {Types} from 'mongoose';
+import type {HydratedDocument, Types} from 'mongoose';
 
-export type HydratedDocumentLike<ID extends Types.ObjectId = Types.ObjectId> = {
-	_id: ID;
-};
+export type HydratedDocumentLike = HydratedDocument<unknown, unknown, unknown>;
 
 export type DocumentCacheChunk<DocType extends HydratedDocumentLike> = {
 	chunk: DocType[];

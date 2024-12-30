@@ -108,11 +108,11 @@ describe('Mongoose cache', () => {
 		expect(onCarUpdated.calledOnce).to.be.eq(true);
 	});
 	it('should test sub document populate', function () {
-		const houseModel = HouseCache.list()[0];
+		const houseModel: HouseDocument | undefined = HouseCache.list()[0];
 		if (!houseModel) {
 			throw new Error('no house model');
 		}
-		const CarModels = CarCache.getArray(houseModel.cars);
+		const CarModels: CarDocument[] = CarCache.getArray(houseModel.cars);
 		expect(CarModels.length).to.be.eq(carCount);
 	});
 	it('should add document to cache', function () {
@@ -164,7 +164,7 @@ describe('Mongoose cache', () => {
 		expect(CarList().length).to.be.eq(carCount);
 	});
 	it('should mangle filter data', function () {
-		const firstCar = cars[0];
+		const firstCar: CarDocument | undefined = cars[0];
 		if (!firstCar) {
 			throw new Error('no first car');
 		}
