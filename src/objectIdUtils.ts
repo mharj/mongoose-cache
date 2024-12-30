@@ -1,11 +1,10 @@
-import {Document, Types} from 'mongoose';
-import {type HydratedDocumentLike} from './types';
+import {Document, type HydratedDocument, Types} from 'mongoose';
 import type {ILoggerLike} from '@avanio/logger-like';
 
 /**
  * All possible Document ID types we can handle
  */
-export type ObjectIdTypes<DocType extends HydratedDocumentLike = HydratedDocumentLike> = Types.ObjectId | DocType | string;
+export type ObjectIdTypes<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> = Types.ObjectId | DocType | string;
 
 export function getObjectId(data: ObjectIdTypes, logger?: ILoggerLike): Types.ObjectId;
 export function getObjectId(data: ObjectIdTypes | undefined, logger?: ILoggerLike): Types.ObjectId | undefined;

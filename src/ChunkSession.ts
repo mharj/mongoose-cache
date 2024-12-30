@@ -1,6 +1,6 @@
-import type {HydratedDocumentLike} from './types';
+import type {HydratedDocument} from 'mongoose';
 
-export interface DocumentCacheSessionChunk<DocType extends HydratedDocumentLike = HydratedDocumentLike> {
+export interface DocumentCacheSessionChunk<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> {
 	chunk: DocType[];
 	/**
 	 * total amount of data
@@ -12,7 +12,7 @@ export interface DocumentCacheSessionChunk<DocType extends HydratedDocumentLike 
 	current: number;
 }
 
-export class ChunkSession<DocType extends HydratedDocumentLike = HydratedDocumentLike> {
+export class ChunkSession<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> {
 	private readonly iteratorData: Set<DocumentCacheSessionChunk<DocType>>;
 	constructor(data: DocType[], size: number) {
 		const chunks: DocumentCacheSessionChunk<DocType>[] = [];

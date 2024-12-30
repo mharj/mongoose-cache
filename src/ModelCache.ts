@@ -6,12 +6,11 @@ import {
 	type ErrorCallbackHandler,
 	getDocIdStr,
 	getObjectId,
-	type HydratedDocumentLike,
 	type ObjectIdTypes,
 } from './';
+import type {HydratedDocument, Types} from 'mongoose';
 import {type ILoggerLike, LogLevel, type LogMapping, MapLogger} from '@avanio/logger-like';
 import {EventEmitter} from 'events';
-import type {Types} from 'mongoose';
 
 const defaultLogMap = {
 	add: LogLevel.None,
@@ -23,7 +22,7 @@ const defaultLogMap = {
 
 export type ModelCacheLogMap = LogMapping<keyof typeof defaultLogMap>;
 
-export type ModelCacheEventsMap<DocType extends HydratedDocumentLike> = {
+export type ModelCacheEventsMap<DocType extends HydratedDocument<unknown>> = {
 	change: [];
 	update: [doc: DocType];
 	add: [doc: DocType];
@@ -31,7 +30,7 @@ export type ModelCacheEventsMap<DocType extends HydratedDocumentLike> = {
 	init: [entries: [Types.ObjectId, DocType][]];
 };
 
-interface MangleOptions<DocType extends HydratedDocumentLike> {
+interface MangleOptions<DocType extends HydratedDocument<unknown>> {
 	preFilter?: CacheFilter<DocType>;
 	sort?: CacheSort<DocType>;
 }
@@ -41,7 +40,7 @@ export interface ModelCacheOptions {
 	logMapping?: Partial<ModelCacheLogMap>;
 }
 
-export class ModelCache<DocType extends HydratedDocumentLike = HydratedDocumentLike> extends EventEmitter<ModelCacheEventsMap<DocType>> {
+export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> extends EventEmitter<ModelCacheEventsMap<DocType>> {
 	private readonly name: string;
 	private readonly logger: MapLogger<ModelCacheLogMap>;
 
