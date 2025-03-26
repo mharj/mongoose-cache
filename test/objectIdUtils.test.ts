@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-import {CarModel, type ICar} from './schemas/car';
+import {Types} from 'mongoose';
 import {describe, expect, it} from 'vitest';
 import {getDocIdStr, getObjectId, isPlainModel, isPlainObjectId} from '../src/objectIdUtils';
-import {Types} from 'mongoose';
+import {CarModel, type ICar} from './schemas/car';
 
 describe('object id utils', function () {
 	it('should verify objectId', function () {

@@ -1,3 +1,6 @@
+import {EventEmitter} from 'events';
+import {type ILoggerLike, LogLevel, type LogMapping, MapLogger} from '@avanio/logger-like';
+import type {HydratedDocument, Types} from 'mongoose';
 import {
 	type CacheFilter,
 	type CacheSort,
@@ -7,10 +10,7 @@ import {
 	getDocIdStr,
 	getObjectId,
 	type ObjectIdTypes,
-} from './';
-import type {HydratedDocument, Types} from 'mongoose';
-import {type ILoggerLike, LogLevel, type LogMapping, MapLogger} from '@avanio/logger-like';
-import {EventEmitter} from 'events';
+} from '.';
 
 const defaultLogMap = {
 	add: LogLevel.None,
@@ -30,16 +30,21 @@ export type ModelCacheEventsMap<DocType extends HydratedDocument<unknown>> = {
 	init: [entries: [Types.ObjectId, DocType][]];
 };
 
-interface MangleOptions<DocType extends HydratedDocument<unknown>> {
+export type MangleOptions<DocType extends HydratedDocument<unknown>> = {
 	preFilter?: CacheFilter<DocType>;
 	sort?: CacheSort<DocType>;
-}
+};
 
-export interface ModelCacheOptions {
+export type ModelCacheOptions = {
 	logger?: ILoggerLike;
 	logMapping?: Partial<ModelCacheLogMap>;
-}
+};
 
+/**
+ * Model cache
+ * @template DocType - document type
+ * @since v0.6.0
+ */
 export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> extends EventEmitter<ModelCacheEventsMap<DocType>> {
 	private readonly name: string;
 	private readonly logger: MapLogger<ModelCacheLogMap>;
@@ -64,7 +69,7 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * Set logger for cache
-	 * @param logger - logger instance
+	 * @param {ILoggerLike | undefined} logger - logger instance
 	 */
 	public setLogger(logger: ILoggerLike | undefined): void {
 		this.logger.setLogger(logger);
@@ -76,6 +81,7 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * Import documents to cache and emit update when done
+	 * @param {Iterable<DocType>} models - list of mongoose documents
 	 */
 	public import(models: Iterable<DocType>): void {
 		const modelArray = Array.from(models);
@@ -90,6 +96,8 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * Add single document to cache
+	 * @param {DocType} model - mongoose document
+	 * @param {boolean} notify - emit update
 	 */
 	public add(model: DocType, notify = true): void {
 		this.replace(model, notify);
@@ -97,6 +105,9 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * Remove single document from cache
+	 * @param {ObjectIdTypes<DocType>} doc - document id or model
+	 * @param {boolean} notify - emit update
+	 * @returns {boolean} - true if deleted
 	 */
 	public delete(doc: ObjectIdTypes<DocType>, notify = true): boolean {
 		const idString = getDocIdStr(doc, this.logger);
@@ -115,6 +126,8 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * Add or replace document in cache
+	 * @param {DocType} model - mongoose document
+	 * @param {boolean} notify - emit update
 	 */
 	public replace(model: DocType, notify = true): void {
 		const idString = getDocIdStr(model, this.logger);
@@ -188,8 +201,6 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 	/**
 	 * List documents
 	 * @param {MangleOptions<DocType>} options - optional preFilter and sort options
-	 * @param options.preFilter - optional pre-filter function to filter documents
-	 * @param options.sort - optional sort function to sort documents (done after pre-filtering)
 	 * @returns {DocType[]} list of cached documents
 	 * @example
 	 * const filterActive: CacheFilter<ModelType> = (doc) => doc.active;
@@ -217,9 +228,10 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * get chunk of data with size and chunk index
-	 * @param size chunk size
-	 * @param index current index
-	 * @returns chunk data, total amount of cache entries and do we have more data than current chunk
+	 * @param {number} size - chunk size
+	 * @param {number} index - current index
+	 * @param {MangleOptions<DocType>} mangle - optional preFilter and sort options
+	 * @returns {DocumentCacheChunk<DocType>} chunk data, total amount of cache entries and do we have more data than current chunk
 	 */
 	public getChunk(size: number, index: number, mangle: MangleOptions<DocType> = {}): DocumentCacheChunk<DocType> {
 		const filterData = this.list(mangle);
@@ -237,6 +249,9 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * get chunk session which have iterator to get next chunk
+	 * @param {number} size - chunk size
+	 * @param {MangleOptions<DocType>} mangle - optional preFilter and sort options
+	 * @returns {ChunkSession<DocType>} Returns chunk session
 	 */
 	public getChunkSession(size: number, mangle: MangleOptions<DocType> = {}): ChunkSession<DocType> {
 		return new ChunkSession<DocType>(this.list(mangle), size);
@@ -244,6 +259,8 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * is id or document on cache
+	 * @param {ObjectIdTypes<DocType>} id - document id or model
+	 * @returns {boolean} - true if on cache
 	 * @deprecated use has() method instead
 	 */
 	public haveModel(id: ObjectIdTypes<DocType>): boolean {
@@ -252,16 +269,22 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 
 	/**
 	 * is id or document on cache
+	 * @param {ObjectIdTypes<DocType>} id - document id or model
+	 * @returns {boolean} - true if on cache
 	 */
 	public has(id: ObjectIdTypes<DocType>): boolean {
 		return this.cacheMap.has(getDocIdStr(id, this.logger));
 	}
 
-	protected asArray(): DocType[] {
-		return Array.from(this.cacheMap.values());
-	}
-
+	/**
+	 * Get Cache values
+	 * @returns {IterableIterator<DocType>} Iterator of cached documents
+	 */
 	public values(): IterableIterator<DocType> {
 		return this.cacheMap.values();
+	}
+
+	protected asArray(): DocType[] {
+		return Array.from(this.cacheMap.values());
 	}
 }

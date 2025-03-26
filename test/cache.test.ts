@@ -1,19 +1,14 @@
-/* eslint-disable @typescript-eslint/no-deprecated */
-/* eslint-disable deprecation/deprecation */
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable import/first */
-/* eslint-disable no-unused-expressions */
 process.env.NODE_ENV = 'test';
+import {type ILoggerLike, LogLevel} from '@avanio/logger-like';
+import {MongoMemoryServer} from 'mongodb-memory-server';
 import * as mongoose from 'mongoose';
 import * as sinon from 'sinon';
 import {beforeAll, beforeEach, describe, expect, it} from 'vitest';
-import {type CarDocument, CarModel} from './schemas/car';
-import {carNames, mockCar} from './mock/car';
+import {ModelCache, type ModelCacheLogMap} from '../src';
 import {type ChunkSession, type DocumentCacheSessionChunk} from '../src/ChunkSession';
+import {carNames, mockCar} from './mock/car';
+import {type CarDocument, CarModel} from './schemas/car';
 import {type HouseDocument, HouseModel} from './schemas/house';
-import {type ILoggerLike, LogLevel} from '@avanio/logger-like';
-import {ModelCache, type ModelCacheLogMap} from '../src/';
-import {MongoMemoryServer} from 'mongodb-memory-server';
 
 let mongod: MongoMemoryServer | undefined;
 

@@ -14,5 +14,6 @@ export default defineConfig({
 			reporter: ['text'],
 		},
 		include: ['test/**/*.test.ts'],
+		hookTimeout: 120000, // 2 minutes, as mongodb server will be downloaded on startup
 	},
 });
