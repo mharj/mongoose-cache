@@ -1,4 +1,4 @@
-import {type ICar} from '../schemas/car';
+import type {ICar} from '../schemas/car';
 
 export const carNames = [
 	'Abarth',

@@ -19,6 +19,7 @@
 		"strictNullChecks": true,
 		"noUnusedLocals": true,
 		"noUncheckedIndexedAccess": true,
+		"strict": true
 	},
 	"include": [
 		"src/"
