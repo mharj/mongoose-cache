@@ -1,4 +1,3 @@
-process.env.NODE_ENV = 'test';
 import {type ILoggerLike, LogLevel} from '@avanio/logger-like';
 import {MongoMemoryServer} from 'mongodb-memory-server';
 import * as mongoose from 'mongoose';

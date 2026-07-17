@@ -19,7 +19,7 @@ export type DocumentCacheSessionChunk<DocType extends HydratedDocument<unknown> 
  */
 export class ChunkSession<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> {
 	private readonly iteratorData: Set<DocumentCacheSessionChunk<DocType>>;
-	constructor(data: DocType[], size: number) {
+	public constructor(data: DocType[], size: number) {
 		const chunks: DocumentCacheSessionChunk<DocType>[] = [];
 		for (let i = 0; i < data.length; i += size) {
 			const chunk = data.slice(i, i + size);

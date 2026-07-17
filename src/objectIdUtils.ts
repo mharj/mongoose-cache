@@ -39,7 +39,7 @@ export function getObjectId(data: ObjectIdTypes | undefined, logger: ILoggerLike
 		}
 		return data._id;
 	}
-	throw new Error('getObjectId: unknown Document ID type: ' + typeof data);
+	throw new Error(`getObjectId: unknown Document ID type: ${typeof data}`);
 }
 
 /**
@@ -83,7 +83,7 @@ export function getDocIdStr(data: ObjectIdTypes | undefined, logger?: ILoggerLik
 		}
 		return data._id.toString();
 	}
-	throw new Error('getDocIdStr: unknown Document ID type: ' + typeof data);
+	throw new Error(`getDocIdStr: unknown Document ID type: ${typeof data}`);
 }
 
 /**

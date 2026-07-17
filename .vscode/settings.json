@@ -1,0 +1,10 @@
+{
+  "js/ts.experimental.useTsgo": true,
+  "editor.defaultFormatter": "biomejs.biome",
+  "oxc.enable": false,
+  "editor.codeActionsOnSave": {
+    "source.action.useSortedKeys.biome": "explicit",
+    "source.fixAll.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  }
+}

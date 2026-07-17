@@ -1,32 +1,24 @@
 {
-	"extends": "@tsconfig/node18/tsconfig.json",
-	"compilerOptions": {
-		"rootDir": "./src",
-		"outDir": "./dist",
-		"sourceRoot": "./src",
-		"types": [
-			"node"
-		],
-		"declaration": true,
-		"removeComments": false,
-		"inlineSources": true,
-		"inlineSourceMap": true,
-		"forceConsistentCasingInFileNames": true,
-		"noImplicitReturns": true,
-		"noImplicitThis": true,
-		"noImplicitAny": true,
-		"importHelpers": true,
-		"strictNullChecks": true,
-		"noUnusedLocals": true,
-		"noUncheckedIndexedAccess": true,
-		"strict": true
-	},
-	"include": [
-		"src/"
-	],
-	"exclude": [
-		"test/",
-		"dist/",
-		"node_modules/"
-	]
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "sourceRoot": "./src",
+    "types": ["node"],
+    "declaration": true,
+    "removeComments": false,
+    "inlineSources": true,
+    "inlineSourceMap": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "importHelpers": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUncheckedIndexedAccess": true,
+    "strict": true
+  },
+  "include": ["src/"],
+  "exclude": ["test/", "dist/", "node_modules/"]
 }

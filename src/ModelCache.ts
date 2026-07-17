@@ -1,5 +1,5 @@
-import {EventEmitter} from 'events';
 import {type ILoggerLike, LogLevel, type LogMapping, MapLogger} from '@avanio/logger-like';
+import {EventEmitter} from 'events';
 import type {HydratedDocument, Types} from 'mongoose';
 import {
 	type CacheFilter,
@@ -85,7 +85,9 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 	 */
 	public import(models: Iterable<DocType>): void {
 		const modelArray = Array.from(models);
-		modelArray.forEach((model) => this.cacheMap.set(getDocIdStr(model, this.logger), model));
+		for (const model of modelArray) {
+			this.cacheMap.set(getDocIdStr(model, this.logger), model);
+		}
 		this.emit(
 			'init',
 			modelArray.map((model) => [model._id, model]),
