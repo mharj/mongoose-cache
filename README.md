@@ -1,26 +1,30 @@
 # Mongoose model cache
 
 [![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.svg?v=101)](https://github.com/ellerbrock/typescript-badges/)
-[![npm version](https://badge.fury.io/js/mharj-mharj-mongoose-cache.svg)](https://badge.fury.io/js/mharj-mharj-mongoose-cache)
+[![npm version](https://badge.fury.io/js/mharj-mongoose-cache.svg)](https://badge.fury.io/js/mharj-mongoose-cache)
 [![Maintainability](https://qlty.sh/gh/mharj/projects/mongoose-cache/maintainability.svg)](https://qlty.sh/gh/mharj/projects/mongoose-cache)
 [![Code Coverage](https://qlty.sh/gh/mharj/projects/mongoose-cache/coverage.svg)](https://qlty.sh/gh/mharj/projects/mongoose-cache)
 ![CI](https://github.com/mharj/mongoose-cache/actions/workflows/main.yml/badge.svg)
 
-## This needs only minimal interaction with database if can feed cache with change stream or pre/post hooks or on model creation/delete calls. Can be easily hooked up with cache event's to push data to presentation layers.(i.e. websockets, other services)
+## Mongoose model cache layering
+
+Minimizes database reads by hydrating the cache via change streams, pre/post hooks, or model create/delete events; cache events can fan out updates to downstream services like UI websockets or other microservices.
 
 ### Create cache instance
 
 ```typescript
-export const SomeCache = new ModelCache<SomeDocument>('Some', {logger: console});
+export const SomeCache = new ModelCache<SomeDocument>("Some", {
+	logger: console,
+});
 ```
 
-### import data
+### Import data
 
 ```typescript
 SomeCache.import(await SomeModel.find());
 ```
 
-### Get value(s)
+### Get Value(s)
 
 ```typescript
 const someModel = SomeCache.list().find((s) => s.something === true);
@@ -53,22 +57,25 @@ const subDocuments = SubDocCache.getArray(someModel.subIdList);
 ### Listen cache updates
 
 ```typescript
-SomeCache.on('updated', () => {
+SomeCache.on("updated", () => {
 	// do something
 });
 ```
 
-### Iterator to iterate over cache in chunks
+### Iterator over cache in chunks
 
 ```typescript
-const carChunkSession: ChunkSession<ICar> = CarCache.getChunkSession(1000, {sort: (a, b) => a.name.localeCompare(b.name)});
-const iter: IterableIterator<DocumentCacheSessionChunk<ICar>> = carChunkSession.getIterator();
+const carChunkSession: ChunkSession<ICar> = CarCache.getChunkSession(1000, {
+	sort: (a, b) => a.name.localeCompare(b.name),
+});
+const iter: IterableIterator<DocumentCacheSessionChunk<ICar>> =
+	carChunkSession.getIterator();
 let current: IteratorResult<DocumentCacheSessionChunk<ICar>> = iter.next();
 while (!current.done) {
 	const value: DocumentCacheSessionChunk<ICar> = current.value;
-	values.total // total number of documents in cache
-	values.current // current number of iterated documents
-	values.chunk // array of 1000 or less documents in this chunk
+	values.total; // total number of documents in cache
+	values.current; // current number of iterated documents
+	values.chunk; // array of 1000 or less documents in this chunk
 }
 // you can check if there is more chunks based on current iterated documents and total documents in cache
 // or wait for next chunk to be .done === true
@@ -77,9 +84,9 @@ while (!current.done) {
 ### Example: Hookup with mongoose change stream
 
 ```typescript
-changeStream = SomeModel.watch(undefined, {fullDocument: 'updateLookup'});
-changeStream.on('change', (change) => {
-	if (change.operationType === 'delete') {
+changeStream = SomeModel.watch(undefined, { fullDocument: "updateLookup" });
+changeStream.on("change", (change) => {
+	if (change.operationType === "delete") {
 		const model = SomeCache.get(change._id);
 		if (model) {
 			SomeCache.delete(model);
@@ -95,6 +102,6 @@ changeStream.on('change', (change) => {
 ### Example: on Model create/delete
 
 ```typescript
-const someModel = await new SomeModel({something: true}).save();
+const someModel = await new SomeModel({ something: true }).save();
 SomeCache.add(someModel);
 ```
