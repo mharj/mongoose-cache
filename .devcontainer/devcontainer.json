@@ -1,18 +1,18 @@
 {
   "name": "mharj-mongoose-cache",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:5-24-trixie",
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"streetsidesoftware.code-spell-checker",
-				"esbenp.prettier-vscode",
-				"mutantdino.resourcemonitor",
-				"vitest.explorer",
-				"biomejs.biome",
-				"github.vscode-github-actions"
-			]
-		}
-	},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "streetsidesoftware.code-spell-checker",
+        "esbenp.prettier-vscode",
+        "mutantdino.resourcemonitor",
+        "vitest.explorer",
+        "biomejs.biome",
+        "github.vscode-github-actions"
+      ]
+    }
+  },
 
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
