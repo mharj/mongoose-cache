@@ -1,5 +1,11 @@
 # Mongoose model cache
 
+[![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.svg?v=101)](https://github.com/ellerbrock/typescript-badges/)
+[![npm version](https://badge.fury.io/js/mharj-mharj-mongoose-cache.svg)](https://badge.fury.io/js/mharj-mharj-mongoose-cache)
+[![Maintainability](https://qlty.sh/gh/mharj/projects/mongoose-cache/maintainability.svg)](https://qlty.sh/gh/mharj/projects/mongoose-cache)
+[![Code Coverage](https://qlty.sh/gh/mharj/projects/mongoose-cache/coverage.svg)](https://qlty.sh/gh/mharj/projects/mongoose-cache)
+![CI](https://github.com/mharj/mongoose-cache/actions/workflows/main.yml/badge.svg)
+
 ## This needs only minimal interaction with database if can feed cache with change stream or pre/post hooks or on model creation/delete calls. Can be easily hooked up with cache event's to push data to presentation layers.(i.e. websockets, other services)
 
 ### Create cache instance

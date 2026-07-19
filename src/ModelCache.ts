@@ -1,5 +1,5 @@
-import {type ILoggerLike, LogLevel, type LogMapping, MapLogger} from '@avanio/logger-like';
-import {EventEmitter} from 'events';
+import {EventEmitter} from 'node:events';
+import {type ILoggerLike, LogLevel, type LogMapInfer, MapLogger} from '@avanio/logger-like';
 import type {HydratedDocument, Types} from 'mongoose';
 import {
 	type CacheFilter,
@@ -13,6 +13,7 @@ import {
 } from '.';
 
 const defaultLogMap = {
+	constructor: LogLevel.None,
 	add: LogLevel.None,
 	clear: LogLevel.None,
 	delete: LogLevel.None,
@@ -20,7 +21,7 @@ const defaultLogMap = {
 	update: LogLevel.None,
 };
 
-export type ModelCacheLogMap = LogMapping<keyof typeof defaultLogMap>;
+export type ModelCacheLogMap = LogMapInfer<typeof defaultLogMap>;
 
 export type ModelCacheEventsMap<DocType extends HydratedDocument<unknown>> = {
 	change: [];
@@ -46,15 +47,14 @@ export type ModelCacheOptions = {
  * @since v0.6.0
  */
 export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocument<unknown>> extends EventEmitter<ModelCacheEventsMap<DocType>> {
-	private readonly name: string;
-	private readonly logger: MapLogger<ModelCacheLogMap>;
-
+	public readonly name: string;
+	public readonly logger: MapLogger<ModelCacheLogMap>;
 	private readonly cacheMap = new Map<string, DocType>();
 
 	public constructor(name: string, {logger, logMapping}: ModelCacheOptions = {}) {
 		super();
 		if (!name) {
-			throw new Error('no cache name defined');
+			throw new Error('ModelCache: no cache name defined');
 		}
 		this.logger = new MapLogger(logger, defaultLogMap);
 		if (logMapping) {
@@ -65,6 +65,7 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 		this.replace = this.replace.bind(this);
 		this.delete = this.delete.bind(this);
 		this.list = this.list.bind(this);
+		this.logger.logKey('constructor', `${this.name} cache constructor`);
 	}
 
 	/**
@@ -287,6 +288,6 @@ export class ModelCache<DocType extends HydratedDocument<unknown> = HydratedDocu
 	}
 
 	protected asArray(): DocType[] {
-		return Array.from(this.cacheMap.values());
+		return Array.from(this.values());
 	}
 }

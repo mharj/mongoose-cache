@@ -1,11 +1,18 @@
 {
   "name": "mharj-mongoose-cache",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:18-bullseye",
-  "customizations": {
-    "vscode": {
-      "extensions": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint"]
-    }
-  }
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:5-24-trixie",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"streetsidesoftware.code-spell-checker",
+				"esbenp.prettier-vscode",
+				"mutantdino.resourcemonitor",
+				"vitest.explorer",
+				"biomejs.biome",
+				"github.vscode-github-actions"
+			]
+		}
+	},
 
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
@@ -14,7 +21,7 @@
   // "forwardPorts": [],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  // "postCreateCommand": "yarn install",
+  "postCreateCommand": "pnpm i"
 
   // Configure tool-specific properties.
   // "customizations": {},

@@ -1,24 +1,9 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "sourceRoot": "./src",
-    "types": ["node"],
-    "declaration": true,
-    "removeComments": false,
-    "inlineSources": true,
-    "inlineSourceMap": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitAny": true,
-    "importHelpers": true,
-    "strictNullChecks": true,
-    "noUnusedLocals": true,
-    "noUncheckedIndexedAccess": true,
-    "strict": true
+    "rootDir": "./"
   },
-  "include": ["src/"],
-  "exclude": ["test/", "dist/", "node_modules/"]
+  "importHelpers": false,
+  "include": ["src/", "test/"],
+  "exclude": ["dist/", "node_modules/"]
 }

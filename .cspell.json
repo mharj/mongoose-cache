@@ -1,0 +1,30 @@
+{
+	"version": "0.2",
+	"language": "en",
+	"enableFiletypes": [
+		"markdown",
+		"typescript"
+	],
+	"ignorePaths": [
+		".cspell.json",
+		".github/workflows/**",
+		".vscode/*.json",
+		"**/*.{json,snap}",
+		"**/coverage/**",
+		"**/dist/**",
+		"**/fixtures/**",
+		"**/node_modules/**"
+	],
+	"words": [
+		"avanio"
+	],
+	"dictionaries": [
+		"typescript",
+		"softwareTerms",
+		"node",
+		"en_US",
+		"npm",
+		"misc",
+		"filetypes"
+	]
+}

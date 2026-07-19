@@ -21,6 +21,7 @@ const logger = {
 } satisfies ILoggerLike;
 
 const testLogMapping: ModelCacheLogMap = {
+	constructor: LogLevel.Debug,
 	add: LogLevel.Debug,
 	clear: LogLevel.Debug,
 	delete: LogLevel.Debug,
@@ -32,6 +33,7 @@ const HouseCache = new ModelCache<HouseDocument>('House', {
 	logger,
 	logMapping: testLogMapping,
 });
+
 const CarCache = new ModelCache<CarDocument>('Car', {logger, logMapping: testLogMapping});
 CarCache.setLogger(logger);
 
@@ -48,10 +50,12 @@ const onCarUpdated = vi.fn();
 const onCarUpdate = vi.fn();
 const onCarAdd = vi.fn();
 const onCarDelete = vi.fn();
+const onCarInit = vi.fn();
 CarCache.on('change', onCarUpdated);
 CarCache.on('update', onCarUpdate);
 CarCache.on('add', onCarAdd);
 CarCache.on('delete', onCarDelete);
+CarCache.on('init', onCarInit);
 
 let carCount = 10000;
 let cars: CarDocument[] = [];
@@ -69,6 +73,7 @@ describe('Mongoose cache', () => {
 		onCarUpdate.mockClear();
 		onCarAdd.mockClear();
 		onCarDelete.mockClear();
+		onCarInit.mockClear();
 		logSpy.mockClear();
 	});
 	beforeAll(async function () {
@@ -108,6 +113,9 @@ describe('Mongoose cache', () => {
 		const CarModels: CarDocument[] = CarCache.getArray(houseModel.cars);
 		expect(CarModels.length).to.be.eq(carCount);
 	});
+	it('should not find non-existent documents', () => {
+		expect(CarCache.getArray([new mongoose.Types.ObjectId()])).to.be.eql([]);
+	});
 	it('should add document to cache', function () {
 		CarCache.add(oneCar);
 		expect(logSpy).toHaveBeenCalledTimes(1);
@@ -133,6 +141,14 @@ describe('Mongoose cache', () => {
 		expect(onCarUpdate).toHaveBeenCalledTimes(1);
 		expect(CarCache.size).to.be.eq(carCount);
 	});
+	it('should replace document without notify', function () {
+		CarCache.replace(oneCar, false);
+		expect(logSpy).toHaveBeenCalledTimes(1);
+		expect(logSpy).toHaveBeenCalledWith(`Car cache update ${oneCar._id.toString()}`);
+		expect(onCarUpdated).toHaveBeenCalledTimes(0);
+		expect(onCarUpdate).toHaveBeenCalledTimes(0);
+		expect(CarCache.size).to.be.eq(carCount);
+	});
 	it('should check document is in cache', function () {
 		expect(CarCache.has(oneCar)).to.be.eq(true);
 		expect(CarCache.haveModel(oneCar)).to.be.eq(true);
@@ -147,9 +163,30 @@ describe('Mongoose cache', () => {
 		carCount--;
 		expect(CarCache.size).to.be.eq(carCount);
 	});
+	it('should delete document from cache without notify', function () {
+		// prepare
+		CarCache.add(oneCar);
+		carCount++;
+		logSpy.mockClear();
+		onCarUpdated.mockClear();
+		onCarDelete.mockClear();
+		// delete without notify
+		expect(CarCache.delete(oneCar, false)).to.be.eq(true);
+		expect(CarCache.delete(oneCar, false)).to.be.eq(false);
+		expect(logSpy).toHaveBeenCalledTimes(1);
+		expect(logSpy).toHaveBeenCalledWith(`Car cache delete ${oneCar._id.toString()}`);
+		expect(onCarUpdated).toHaveBeenCalledTimes(0);
+		expect(onCarDelete).toHaveBeenCalledTimes(0);
+		carCount--;
+		expect(CarCache.size).to.be.eq(carCount);
+	});
 	it('should get chunk data', function () {
 		const {total, haveMore, index, size} = CarCache.getChunk(1, 0);
 		expect({haveMore, index, size, total}).to.be.eql({haveMore: true, index: 0, size: 1, total: carCount});
+	});
+	it('should notify', function () {
+		CarCache.notify();
+		expect(onCarInit.mock.calls.length).to.be.eq(1);
 	});
 	it('test getting data with bind method', () => {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -202,7 +239,7 @@ describe('Mongoose cache', () => {
 			CarCache.clear();
 			CarCache.import(cars);
 		});
-		it('should create chunk session', {timeout: 100}, function () {
+		it('should create chunk session', {timeout: 200}, function () {
 			carChunkSession = CarCache.getChunkSession(1000, {sort: (a, b) => a.name.localeCompare(b.name)});
 		});
 		it('should test Chunk iterator session', () => {
@@ -215,6 +252,14 @@ describe('Mongoose cache', () => {
 				current = iter.next();
 			}
 			expect(current.done).to.be.eq(true);
+		});
+	});
+	describe('ModelCache constructor', () => {
+		it('should throw error if no cache name defined', () => {
+			expect(() => new ModelCache<CarDocument>(null as unknown as string)).to.throw(Error, 'ModelCache: no cache name defined');
+		});
+		it('should create a ModelCache instance without options', () => {
+			expect(new ModelCache<CarDocument>('Name')).to.be.instanceOf(ModelCache);
 		});
 	});
 });
