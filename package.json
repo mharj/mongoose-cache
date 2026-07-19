@@ -22,7 +22,7 @@
         "test": "vitest test --run --no-isolate --coverage",
         "coverage": "vitest test --run --no-isolate --reporter=dot --coverage --coverage.reporter=lcov",
         "lint": "biome check",
-        "validate": "tsc --noEmit --project tsconfig.test.json"
+        "validate": "tsc --noEmit"
     },
     "files": [
         "dist"
