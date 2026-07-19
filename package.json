@@ -1,6 +1,6 @@
 {
     "name": "mharj-mongoose-cache",
-    "version": "0.9.3",
+    "version": "0.9.4",
     "description": "mongoose model cache",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",
