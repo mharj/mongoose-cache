@@ -1,4 +1,4 @@
-name: Validate and publish package to npmjs
+name: CICD
 on:
   push:
     branches: [main]
