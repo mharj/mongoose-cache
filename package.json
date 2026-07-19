@@ -27,10 +27,7 @@
     "files": [
         "dist"
     ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/mharj/mongoose-cache.git"
-    },
+    "repository": "github:mharj/mongoose-cache",
     "keywords": [
         "mongo",
         "mongoose",
