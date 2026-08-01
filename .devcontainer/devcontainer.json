@@ -9,7 +9,8 @@
         "mutantdino.resourcemonitor",
         "vitest.explorer",
         "biomejs.biome",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "eamodio.gitlens"
       ]
     }
   },

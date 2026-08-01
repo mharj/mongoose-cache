@@ -1,62 +1,56 @@
 {
-    "name": "mharj-mongoose-cache",
-    "version": "0.9.4",
-    "description": "mongoose model cache",
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.mts",
-    "exports": {
-        "import": {
-            "types": "./dist/index.d.mts",
-            "default": "./dist/index.mjs"
-        },
-        "require": {
-            "types": "./dist/index.d.cts",
-            "default": "./dist/index.cjs"
-        },
-        "default": "./dist/index.mjs"
+  "name": "mharj-mongoose-cache",
+  "version": "0.9.4",
+  "description": "mongoose model cache",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    "import": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     },
-    "scripts": {
-        "build": "tsdown src/index.ts --format cjs,esm --dts --clean --project tsconfig.build.json",
-        "prepublishOnly": "npm run build",
-        "test": "vitest test --run --no-isolate --coverage",
-        "coverage": "vitest test --run --no-isolate --reporter=dot --coverage --coverage.reporter=lcov",
-        "lint": "biome check",
-        "validate": "tsc --noEmit"
+    "require": {
+      "types": "./dist/index.d.cts",
+      "default": "./dist/index.cjs"
     },
-    "files": [
-        "dist"
-    ],
-    "repository": "github:mharj/mongoose-cache",
-    "keywords": [
-        "mongo",
-        "mongoose",
-        "cache"
-    ],
-    "author": "mharj",
-    "license": "LGPL-2.0-only",
-    "bugs": {
-        "url": "https://github.com/mharj/mongoose-cache/issues"
-    },
-    "homepage": "https://github.com/mharj/mongoose-cache#readme",
-    "devDependencies": {
-        "@avanio/logger-like": "^0.2.12",
-        "@biomejs/biome": "^2.5.4",
-        "@tsconfig/node18": "^18.2.6",
-        "@types/node": "^22.20.1",
-        "@vitest/coverage-v8": "^4.1.10",
-        "c8": "^12.0.0",
-        "mongodb-memory-server": "^11.2.0",
-        "mongoose": "^9.7.4",
-        "tsdown": "^0.22.9",
-        "tslib": "^2.8.1",
-        "typescript": "^7.0.2",
-        "vite": "^8.1.5",
-        "vitest": "^4.1.10"
-    },
-    "peerDependencies": {
-        "@avanio/logger-like": ">= 0.2.10",
-        "mongoose": ">= 6.0.0"
-    },
-    "packageManager": "pnpm@10.6.5+sha512.cdf928fca20832cd59ec53826492b7dc25dc524d4370b6b4adbf65803d32efaa6c1c88147c0ae4e8d579a6c9eec715757b50d4fa35eea179d868eada4ed043af"
+    "default": "./dist/index.mjs"
+  },
+  "scripts": {
+    "build": "tsdown src/index.ts --format cjs,esm --dts --clean --project tsconfig.build.json",
+    "prepublishOnly": "npm run build",
+    "test": "vitest test --run --no-isolate --coverage",
+    "coverage": "vitest test --run --no-isolate --reporter=dot --coverage --coverage.reporter=lcov",
+    "lint": "biome check",
+    "validate": "tsc --noEmit"
+  },
+  "files": ["dist"],
+  "repository": "github:mharj/mongoose-cache",
+  "keywords": ["mongo", "mongoose", "cache"],
+  "author": "mharj",
+  "license": "LGPL-2.0-only",
+  "bugs": {
+    "url": "https://github.com/mharj/mongoose-cache/issues"
+  },
+  "homepage": "https://github.com/mharj/mongoose-cache#readme",
+  "devDependencies": {
+    "@avanio/logger-like": "^0.2.13",
+    "@biomejs/biome": "^2.5.6",
+    "@tsconfig/node18": "^18.2.6",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "c8": "^12.0.0",
+    "mongodb-memory-server": "^11.2.0",
+    "mongoose": "^9.9.1",
+    "tsdown": "^0.22.14",
+    "tslib": "^2.8.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  },
+  "peerDependencies": {
+    "@avanio/logger-like": ">= 0.2.10",
+    "mongoose": ">= 6.0.0"
+  },
+  "packageManager": "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e"
 }

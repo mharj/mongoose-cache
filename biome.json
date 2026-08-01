@@ -1,9 +1,17 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    },
+    "enabled": false
+  },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**/*.ts", "**/*.mts", "**/*.json", "!package.json", "!dist"]
+    "includes": ["**/*.ts", "**/*.mts", "**/*.json"]
   },
   "formatter": {
     "enabled": true,
@@ -127,23 +135,28 @@
     }
   },
   "javascript": {
+    "assist": {
+      "enabled": true
+    },
     "formatter": {
+      "arrowParentheses": "always",
+      "attributePosition": "auto",
+      "bracketSameLine": false,
+      "bracketSpacing": false,
+      "indentStyle": "tab",
+      "indentWidth": 2,
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
-      "trailingCommas": "all",
-      "semicolons": "always",
-      "arrowParentheses": "always",
-      "bracketSameLine": false,
       "quoteStyle": "single",
-      "attributePosition": "auto",
-      "bracketSpacing": false
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "trailingNewline": true,
+      "delimiterSpacing": false,
+      "lineEnding": "lf",
+      "operatorLinebreak": "before"
     }
   },
   "html": { "formatter": { "selfCloseVoidElements": "always" } },
-  "assist": {
-    "enabled": true,
-    "actions": { "source": { "organizeImports": "on" } }
-  },
   "overrides": [
     {
       "includes": ["**/*.test.ts", "**/*.test-d.ts", "**/example.ts"],
