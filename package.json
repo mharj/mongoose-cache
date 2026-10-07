@@ -24,15 +24,9 @@
     "lint": "biome check",
     "validate": "tsc --noEmit"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "repository": "github:mharj/mongoose-cache",
-  "keywords": [
-    "mongo",
-    "mongoose",
-    "cache"
-  ],
+  "keywords": ["mongo", "mongoose", "cache"],
   "author": "mharj",
   "license": "LGPL-2.0-only",
   "bugs": {
